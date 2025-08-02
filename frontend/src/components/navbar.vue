@@ -37,6 +37,7 @@ const menuOptionsLoggedOut = [
   { label: 'Tentang Kami', key: 'TentangKami', to: '/tentangkami' },
   { label: 'Program', key: 'Program', to: '/program' },
   { label: 'Menjadi Tutor', key: 'Menjadi Tutor', to: '/pendaftarantutor' },
+  { label: 'Artikel', key: 'Artikel', to: '/artikel' },
   { label: 'Daftar', key: 'Daftar', to: '/daftar' },
   { label: 'Masuk', key: 'Masuk', to: '/auth' },
 ];
@@ -46,6 +47,7 @@ const menuOptionsLoggedIn = [
   { label: 'Tentang Kami', key: 'TentangKami', to: '/tentangkami' },
   { label: 'Absen', key: 'Absen', to: '/absen' },
   { label: 'Program', key: 'Program', to: '/program' },
+  { label: 'Artikel', key: 'Artikel', to: '/artikel' },
   { label: 'Rekap', key: 'Rekap', to: '/rekap' },
 ];
 

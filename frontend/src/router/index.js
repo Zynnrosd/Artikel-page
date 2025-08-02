@@ -3,6 +3,8 @@ import Main from '../Main.vue';
 import Home from '../Home.vue'; 
 import TentangKami from '../TentangKami.vue';
 import DetailProgram from '../detailProgram.vue';
+import Artikel from '../Artikel.vue' 
+import IsiArtikel from'../IsiArtikel.vue'
 
 import Program from '@/components/listProgram/program.vue'
 import programBelajar from '../components/detailProgram/program.vue'
@@ -60,9 +62,13 @@ import CatatanBiaya from '@/components/Dashboard/dashboardCatatanBiaya/CatatanBi
 import DashboardBiaya from '@/components/Dashboard/dashboardCatatanBiaya/DashboardBiaya.vue';
 import DetailProgramSelesai from '@/components/Dashboard/dashboardCatatanBiaya/DetailProgramSelesai.vue';
 
+import FormTambahArtikel from '@/components/Dashboard/dashboardArtikel/FormTambahArtikel.vue';
+import FormTambahKategori from '@/components/Dashboard/dashboardArtikel/FormTambahKategori.vue';
+import DaftarArtikelAdmin from '@/components/Dashboard/dashboardArtikel/DaftarArtikelAdmin.vue';
+import ArtikelAdminWrapper from '@/components/Dashboard/dashboardArtikel/ArtikelAdminWrapper.vue';
+
 import Error404 from '@/components/error404.vue';
 import Error403 from '@/components/error403.vue';
-
 
 const routes = [
   { 
@@ -121,8 +127,18 @@ const routes = [
         name: 'Rekap', 
         component: Rekap 
       },
+      { path: 'artikel',
+        name: 'Artikel',
+        component: Artikel
+      },
+      {
+        path: 'artikel/:id',
+        name: 'isiArtikel', 
+        component: IsiArtikel
+      },
     ]
   },
+ 
   {
     path: '/otp', 
     component: Otp,
@@ -326,6 +342,28 @@ const routes = [
             path: 'detail/:classId',
             name: 'DetailProgramSelesai',
             component: DetailProgramSelesai
+          },
+        ]
+      },
+      {
+        path: 'artikel', // Path untuk menu Artikel di Dashboard Admin
+        name: 'ArtikelAdminWrapper',
+        component: ArtikelAdminWrapper,// Komponen wrapper untuk sub-menu
+        children: [
+          {
+            path: 'tambah',
+            name: 'TambahArtikelAdmin',
+            component: FormTambahArtikel,
+          },
+          {
+            path: 'kategori',
+            name: 'KelolaKategoriAdmin',
+            component: FormTambahKategori,
+          },
+          {
+            path: 'daftar',
+            name: 'DaftarArtikelAdmin',
+            component: DaftarArtikelAdmin,
           },
         ]
       },

@@ -19,6 +19,7 @@
               <span>Dashboard</span>
             </router-link>
           </li>
+
           <li class="nav-item">
             <router-link
               class="nav-but"
@@ -30,6 +31,7 @@
               <span>Siswa</span>
             </router-link>
           </li>
+
           <li class="nav-item">
             <router-link
               class="nav-but"
@@ -41,6 +43,7 @@
               <span>Tutor</span>
             </router-link>
           </li>
+
           <li class="nav-item">
             <router-link
               class="nav-but"
@@ -52,6 +55,7 @@
               <span>Program</span>
             </router-link>
           </li>
+
           <li class="nav-item">
             <router-link
               class="nav-but"
@@ -63,6 +67,7 @@
               <span>Jadwal Program Aktif</span>
             </router-link>
           </li>
+
           <li class="nav-item">
             <router-link
               class="nav-but"
@@ -74,7 +79,26 @@
               <span>Catatan & Biaya</span>
             </router-link>
           </li>
-        </ul>
+
+          <li class="nav-item has-submenu">
+            <a @click.prevent="toggleSubmenu('artikel')" :class="{ 'active': activeSubmenu === 'artikel' }" class="nav-but">
+              <ion-icon name="document-text-outline" class="icon-white"></ion-icon>
+              <span>Artikel</span>
+              <ion-icon name="chevron-down-outline" class="submenu-icon" :class="{ 'rotate': activeSubmenu === 'artikel' }"></ion-icon>
+            </a>
+            <ul v-if="activeSubmenu === 'artikel'" class="submenu">
+              <li>
+                <router-link :to="{ name: 'TambahArtikelAdmin' }">Tambah Artikel</router-link>
+              </li>
+              <li>
+                <router-link :to="{ name: 'KelolaKategoriAdmin' }">Kelola Kategori</router-link>
+              </li>
+              <li>
+                <router-link :to="{ name: 'DaftarArtikelAdmin' }">Daftar Artikel</router-link>
+              </li>
+            </ul>
+          </li>
+          </ul>
       </nav>
 
       <n-divider />
@@ -103,12 +127,20 @@ export default {
   data() {
     return {
       sidebarOpen: false,
-      activeMenu: 'Dashboard' // default menu aktif
+      activeMenu: 'Dashboard', // default menu aktif
+      IsArtikelSubmenuOpen: false
     };
   },
   methods: {
     toggleSidebar() {
       this.sidebarOpen = !this.sidebarOpen;
+    },
+     toggleSubmenu(menuName) { // METHOD INI DITAMBAHKAN
+      this.activeSubmenu = this.activeSubmenu === menuName ? null : menuName;
+      // Opsional: nonaktifkan menu utama saat submenu dibuka
+      if (this.activeSubmenu) {
+        this.activeMenu = null;
+      }
     },
     handleClickOutside(event) {
       const isMobile = window.innerWidth <= 768;
@@ -123,6 +155,9 @@ export default {
     },
     setActive(menu) {
       this.activeMenu = menu;
+      if (menu !== 'Artikel') {
+        this.activeSubmenu = null;
+      }
     },
     handleLogout() {
       localStorage.removeItem('token');
@@ -239,6 +274,82 @@ export default {
 
 .buttonb1 {
   color: white;
+}
+
+.has-submenu {
+    position: relative;
+    list-style: none; /* Pastikan list-style tidak muncul */
+}
+
+.has-submenu a { /* Styling untuk parent link */
+    cursor: pointer;
+    text-decoration: none;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Tambahkan ini agar panah di kanan */
+    padding: 12px 16px;
+    border-radius: 25px;
+    transition: background-color 0.3s ease;
+}
+
+.has-submenu a:hover {
+    background-color: #1a1a1a;
+}
+
+.submenu-icon {
+    transition: transform 0.3s ease;
+    margin-left: auto;
+    width: 20px;
+    height: 20px;
+}
+
+.submenu-icon.rotate {
+    transform: rotate(180deg);
+}
+
+.submenu {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 0.5rem 0; /* Hapus margin kiri */
+    /* Padding kiri ini yang akan membuat indentasi */
+    /* 44px adalah perkiraan dari (padding kiri nav-but 16px + lebar ikon 20px + gap 8px) */
+    padding-left: 44px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+
+.submenu li a {
+    color: #b0b0b0;
+    text-decoration: none;
+    padding: 0.5rem 2.85rem;
+    border-radius: 25px;
+    transition: all 0.2s ease;
+    font-size: 0.9em;
+}
+
+.submenu a.router-link-exact-active {
+    /* Hapus background-color dan border-left */
+    background-color: transparent; /* Pastikan tidak ada warna latar belakang */
+    color: #fff; /* Jadikan warna teks putih agar lebih jelas */
+    position: relative; /* Penting agar pseudo-element bisa diposisikan */
+    padding-left: calc(2.85rem + 15px); 
+  }
+
+/* Tambahkan panah > di sebelah kiri link */
+.submenu a.router-link-exact-active::before {
+    content: '>'; /* Karakter panah */
+    position: absolute;
+    left: 1rem; /* Sesuaikan posisi panah */
+    font-weight: bold;
+    color: #fff;
+}
+
+.submenu li a:hover {
+    background-color: #1a1a1a;
+    color: #fff;
 }
 
 /* Responsiveness */
