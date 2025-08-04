@@ -121,48 +121,13 @@
             <span class="label-text">Isi Artikel</span>
             <span class="label-required">*</span>
           </label>
-          <div class="editor-wrapper">
-            <div class="editor-toolbar">
-              <div class="toolbar-group">
-                <button type="button" class="toolbar-btn" title="Bold">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
-                    <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
-                  </svg>
-                </button>
-                <button type="button" class="toolbar-btn" title="Italic">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="19" y1="4" x2="10" y2="4"/>
-                    <line x1="14" y1="20" x2="5" y2="20"/>
-                    <line x1="15" y1="4" x2="9" y2="20"/>
-                  </svg>
-                </button>
-                <button type="button" class="toolbar-btn" title="Underline">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M6 4v7a6 6 0 0 0 12 0V4"/>
-                    <line x1="4" y1="20" x2="20" y2="20"/>
-                  </svg>
-                </button>
-              </div>
-              <div class="word-count">{{ wordCount }} kata</div>
-            </div>
-            <textarea 
-              id="content" 
-              v-model="form.content" 
-              placeholder="Mulai menulis artikel Anda di sini..."
-              class="form-textarea"
-              rows="12" 
-              required
-            ></textarea>
-            <div class="editor-footer">
-              <small class="editor-note">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="m9 12 2 2 4-4"/>
-                </svg>
-                Mendukung format Markdown untuk styling lanjutan
-              </small>
-            </div>
+
+          <EditorTiny v-model="form.content" />
+
+          <div 
+            v-if="form.content" 
+            v-html="form.content" 
+            class="preview-output mt-4 p-4 bg-gray-50 border rounded">
           </div>
         </div>
       </div>
@@ -194,6 +159,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import EditorTiny from '@/components/artikel/EditorTiny.vue'
 import axios from 'axios';
 
 const router = useRouter();
@@ -358,7 +324,7 @@ const goBack = () => {
   width: 100%;
   max-width: 1300px;
   margin: 1.25rem auto;
-  height: calc(100vh - 3.5rem * 2); /* agar tinggi total tetap pas */
+  height: calc(100vh - 2.5rem * 2); /* agar tinggi total tetap pas */
   overflow-y: auto; /* hanya scroll di kotak putih */
   display: flex;
   flex-direction: column;

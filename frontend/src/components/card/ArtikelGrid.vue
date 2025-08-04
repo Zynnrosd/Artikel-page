@@ -1,7 +1,5 @@
 <template>
-  <div 
-    :class="['articles-grid', { 'centered-small-grid': (articles.length === 1 || articles.length === 2) && isDesktop }]"
-  >
+  <div class="articles-grid">
     <div v-for="article in articles" :key="article.id" class="article-card">
       <div class="article-image-container">
         <img :src="article.image || 'https://via.placeholder.com/300x200?text=Artikel+Gambar'" :alt="article.title" class="article-image" />
@@ -66,23 +64,16 @@ const formatUploadTime = (dateString) => {
 </script>
 
 <style scoped>
-/* Styling untuk grid artikel dan kartu artikel */
 .articles-grid {
   display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 2rem;
-  padding: 2rem 0;
-}
+  padding: 1rem 1rem 1rem; 
+  max-width: 1320px;
+  margin: 0 auto;
+  place-items: stretch;
+  transition: all 0.3s ease-in-out;
 
-/* Force 4 columns on desktop screens */
-@media (min-width: 981px) {
-  .articles-grid {
-    grid-template-columns: repeat(4, 1fr); 
-  }
-
-  .article-card {
-    max-width: 320px;
-    height: 380px; 
-  }
 }
 
 .article-card {
@@ -93,7 +84,7 @@ const formatUploadTime = (dateString) => {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   display: flex;
   flex-direction: column;
-  height: 100%; 
+  height: 100%;
 }
 
 .article-card:hover {
@@ -114,15 +105,20 @@ const formatUploadTime = (dateString) => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
   object-position: center 50%;
+  display: block;
+  transition: transform 0.5s ease;
+}
+
+.article-image-container:hover .article-image {
+  transform: scale(1.1); /* efek zoom saat hover */
 }
 
 .article-content {
-  padding: 1.5rem;
+  padding: 1.2rem;
   display: flex;
   flex-direction: column;
-  flex-grow: 1; 
+  flex-grow: 1;
   padding-top: 0.5rem;
 }
 
@@ -138,9 +134,8 @@ const formatUploadTime = (dateString) => {
   bottom: 10px;
   left: 1.5rem;
   z-index: 1;
-  width: fit-content;
-  max-width: calc(100% - 20px);
   white-space: nowrap;
+  max-width: calc(100% - 20px);
 }
 
 .article-title {
@@ -153,7 +148,7 @@ const formatUploadTime = (dateString) => {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  line-clamp: 2;
+  line-clamp: 2; 
   overflow: hidden;
   text-overflow: ellipsis;
   height: calc(1.35rem * 1.4 * 2);
@@ -164,18 +159,17 @@ const formatUploadTime = (dateString) => {
   color: #666;
   margin-bottom: 1.2rem;
   line-height: 1.5;
-  height: calc(0.95rem * 1.5 * 2); /* Disesuaikan: Hitung tinggi pasti untuk 2 baris */
-  display: -webkit-box; 
-  -webkit-line-clamp: 2; 
-  -webkit-box-orient: vertical; 
-  line-clamp: 2;
-  overflow: hidden; 
+  height: calc(0.95rem * 1.5 * 2);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2; 
+  overflow: hidden;
   text-overflow: ellipsis;
-  flex-grow: 1; 
-  text-align: justify; 
+  flex-grow: 1;
+  text-align: justify;
 }
 
-/* Waktu Unggah dan Penulis */
 .article-meta-list {
   font-size: 0.85rem;
   color: #888;
@@ -220,116 +214,33 @@ const formatUploadTime = (dateString) => {
   grid-column: 1 / -1;
 }
 
-/* Layout khusus untuk satu atau dua artikel */
-.articles-grid.centered-small-grid {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 2rem;
-}
-
-.articles-grid.centered-small-grid .article-card {
-  max-width: 300px;
-  width: 100%;
-}
-
-/* Responsive adjustments */
-@media (max-width: 981px) {
+/* Responsive */
+@media (max-width: 1200px) {
   .articles-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, 1fr);
   }
+}
 
-  .article-card {
-    max-width: 100%;
-  }
-
-  .article-image-container {
-    height: 180px;
-  }
-
-  .article-content {
-    padding: 1rem;
-  }
-
-   .article-title {
-  font-size: 1.2rem;
-  color: #154484;
-  margin: 0.5rem 0;
-  line-height: 1.4;
-  font-weight: 600;
-  text-align: left;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  line-clamp: 2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  height: calc(1.35rem * 1.4 * 2);
-  }
-
-  .article-description {
-    font-size: 0.9rem;
-    color: #666;
-    margin-bottom: 1.2rem;
-    line-height: 1.5;
-    height: calc(0.9rem * 1.5 * 2); /* Disesuaikan: Tinggi eksplisit untuk 2 baris */
-    display: -webkit-box;
-    -webkit-line-clamp: 2; /* Batasi deskripsi menjadi 2 baris */
-    -webkit-box-orient: vertical;
-    line-clamp: 2; /* Properti standar */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex-grow: 1;
-    text-align: justify;
-  }
-
-  .article-meta-list {
-    font-size: 0.8rem;
-  }
-
-  .articles-grid.centered-small-grid {
-    display: grid;
-    justify-content: unset;
-    gap: 2rem;
-  }
-  .articles-grid.centered-small-grid .article-card {
-    max-width: 100%;
+@media (max-width: 768px) {
+  .articles-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 480px) {
+  .articles-grid {
+    grid-template-columns: 1fr; /* Bikin 1 kolom aja di layar kecil */
+  }
+
   .article-content {
     padding: 0.8rem;
   }
-  .article-title {
-  font-size: 1.1rem;
-  color: #154484;
-  margin: 0.5rem 0;
-  line-height: 1.4;
-  font-weight: 600;
-  text-align: left;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  line-clamp: 2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  height: calc(1.35rem * 1.4 * 2);
+
+  .read-more-button {
+    padding: 0.6rem 1rem;
+    font-size: 0.7rem;
   }
-   .article-description {
-    font-size: 0.8rem;
-    color: #666;
-    margin-bottom: 1rem;
-    line-height: 1.4;
-    height: calc(0.8rem * 1.4 * 2); /* Disesuaikan: Tinggi eksplisit untuk 2 baris */
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    line-clamp: 2;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex-grow: 1;
-    text-align: justify;
-  }
+
 }
+
 </style>

@@ -27,15 +27,16 @@ import ArtikelContent from './components/artikel/ArtikelContent.vue';
 
 .content-wrapper {
   flex-grow: 1;
-  padding: 4rem 4rem 4rem 4rem;
+  padding: 2rem 4rem;
   width: 100%;
   box-sizing: border-box;
+  transition: padding 0.3s ease;
 }
 
 /* Responsive adjustments for Artikel.vue general layout */
 @media (max-width: 981px) { /* Untuk tablet dan mobile */
   .content-wrapper {
-    padding: 4rem 4rem 4rem 4rem; 
+    padding: 2rem 2rem; 
     max-width: 100%;
   }
 }

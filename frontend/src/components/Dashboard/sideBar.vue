@@ -121,55 +121,53 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'SidebarNav',
-  data() {
-    return {
-      sidebarOpen: false,
-      activeMenu: 'Dashboard', // default menu aktif
-      IsArtikelSubmenuOpen: false
-    };
-  },
-  methods: {
-    toggleSidebar() {
-      this.sidebarOpen = !this.sidebarOpen;
-    },
-     toggleSubmenu(menuName) { // METHOD INI DITAMBAHKAN
-      this.activeSubmenu = this.activeSubmenu === menuName ? null : menuName;
-      // Opsional: nonaktifkan menu utama saat submenu dibuka
-      if (this.activeSubmenu) {
-        this.activeMenu = null;
-      }
-    },
-    handleClickOutside(event) {
-      const isMobile = window.innerWidth <= 768;
-      if (
-        isMobile &&
-        this.sidebarOpen &&
-        !this.$refs.sidebar.contains(event.target) &&
-        !this.$refs.burger.contains(event.target)
-      ) {
-        this.sidebarOpen = false;
-      }
-    },
-    setActive(menu) {
-      this.activeMenu = menu;
-      if (menu !== 'Artikel') {
-        this.activeSubmenu = null;
-      }
-    },
-    handleLogout() {
-      localStorage.removeItem('token');
-      this.$router.push('/auth');
-    }
-  },
-  mounted() {
-    document.addEventListener('click', this.handleClickOutside);
-  },
-  beforeUnmount() {
-    document.removeEventListener('click', this.handleClickOutside);
+<script setup>
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+
+const route = useRoute();
+const router = useRouter();
+const sidebarOpen = ref(false);
+const activeMenu = ref('HomeAdmin'); // State untuk menu yang aktif
+const activeSubmenu = ref(null); // State untuk submenu yang aktif
+
+// Computed property untuk mengecek apakah salah satu rute artikel aktif
+const isArtikelParentActive = computed(() => {
+  return ['TambahArtikelAdmin', 'KelolaKategoriAdmin', 'DaftarArtikelAdmin'].includes(route.name);
+});
+
+// Watcher untuk sinkronisasi menu dengan rute saat ini
+watch(() => route.name, (newName) => {
+  const adminRoutes = {
+    HomeAdmin: 'Dashboard',
+    siswaMain: 'Siswa',
+    TutorMain: 'Tutor',
+    ProgramMain: 'Program',
+    JadwalAdminView: 'Jadwal Program Aktif',
+    DashboardBiaya: 'Catatan & Biaya',
+  };
+
+  if (adminRoutes[newName]) {
+    activeMenu.value = adminRoutes[newName];
+    activeSubmenu.value = null; // Tutup submenu jika mengklik menu utama
+  } else if (isArtikelParentActive.value) {
+    activeMenu.value = null; // Nonaktifkan menu utama
+    activeSubmenu.value = 'artikel'; // Buka submenu artikel
   }
+}, { immediate: true });
+
+const toggleSidebar = () => {
+  sidebarOpen.value = !sidebarOpen.value;
+};
+
+const toggleSubmenu = (menuName) => {
+  activeSubmenu.value = activeSubmenu.value === menuName ? null : menuName;
+  activeMenu.value = activeSubmenu.value ? null : 'Dashboard';
+};
+
+const handleLogout = () => {
+  localStorage.removeItem('token');
+  router.push('/auth');
 };
 </script>
 
