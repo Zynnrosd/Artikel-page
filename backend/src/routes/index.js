@@ -10,6 +10,7 @@ import docs from './docs.js';
 import attendance from './attendance.js';
 import tutorApplication from './tutorApplication.js';
 import salary from './salary.js';
+import article from './article.js';
 
 export default (app) => {
     root(app);
@@ -24,4 +25,5 @@ export default (app) => {
     attendance(app);
     tutorApplication(app);
     salary(app);
+    app.use('/', article);
   };
