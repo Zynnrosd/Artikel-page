@@ -1,0 +1,15 @@
+model Category {
+  idKategori   String   @id @default(uuid()) @map("id_kategori") // Changed from uuid(7) to uuid()
+  namaKategori String   @unique @map("nama_kategori")
+  authorId     String   @map("author_id")
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamp()
+
+  // Relations
+  author       User      @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  articles     Article[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp()
+
+  @@map("categories")
+}
