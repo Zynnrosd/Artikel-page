@@ -35,6 +35,15 @@ async function main() {
   loaders(app, server);
   routes(app);
 
+  app.get('/dashboardadmin*', (req, res) => {
+  res.sendFile(path.resolve(__dirname, '../public/index.html'));
+  });
+
+  //bug refresh register
+  app.get('/auth', (req, res) => {
+  res.sendFile(path.resolve(__dirname, '../public/index.html'));
+  });
+
   app.get('*', (req, res, next) => {
     if (req.path.includes('.')) return next();
     if (
@@ -48,7 +57,9 @@ async function main() {
       req.path.startsWith('/attendance') ||
       req.path.startsWith('/orders') ||
       req.path.startsWith('/apply') ||
-      req.path.startsWith('/salaries')
+      req.path.startsWith('/salaries') ||
+       req.path.startsWith('/articles') ||      
+      req.path.startsWith('/categories')   
     ) return next();
     res.sendFile(path.resolve(__dirname, '../public/index.html'));
   });

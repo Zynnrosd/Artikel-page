@@ -6,6 +6,16 @@
     <link rel="icon" href="/logomandala22.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mandala</title>
+    <script>
+  if (window.location.pathname.startsWith('/dashboardadmin')) {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      window.location.replace('/error403');
+    }
+   
+  }
+</script>
     <script type="module" crossorigin src="/assets/index-Bn6jFQRx.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-Ccml7kid.css">
   </head>
