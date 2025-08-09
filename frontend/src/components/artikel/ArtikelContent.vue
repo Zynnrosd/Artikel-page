@@ -2,12 +2,12 @@
   <div class="artikel-content-container">
     <h1 class="page-title">Artikel</h1>
 
-    <p v-if="activeTab === 'Semua Artikel'" class="selected-category-display">
-      Semua Kategori
-    </p>
-    <p v-else-if="activeTab !== 'Semua Artikel'" class="selected-category-display">
-      Kategori: {{ activeTab }}
-    </p>
+      <p v-if="activeTab === 'Semua Artikel'" class="selected-category-display">
+        Semua Kategori
+      </p>
+      <p v-else-if="activeTab !== 'Semua Artikel'" class="selected-category-display">
+        Kategori: {{ activeTab }}
+      </p>
 
     <SearchBar v-model:searchQuery="searchQuery" @performSearch="performSearch" />
 
@@ -15,6 +15,30 @@
       :categories="categories" 
       v-model:activeTab="activeTab" 
     />
+
+    <div class="author-filter-wrapper">
+    <label class="author-filter-label">
+      <ion-icon name="person-outline" class="author-icon" />
+        <select v-model="selectedAuthor" class="author-select">
+          <option value="">Semua Author</option>
+          <option 
+            v-for="author in authors" 
+            :key="author" 
+            :value="author"
+          > {{ author }}
+          </option>
+        </select>
+    </label>
+
+  <button 
+    v-if="selectedAuthor" 
+    @click="selectedAuthor = ''" 
+    class="author-clear-btn"
+    title="Clear filter"
+  >
+    <ion-icon name="close-outline"></ion-icon>
+  </button>
+</div>
 
     <ArtikelGrid 
       v-if="currentArticles.length"
@@ -59,15 +83,16 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'; 
-import { useRouter } from 'vue-router';
 
 import SearchBar from '../common/SearchBar.vue'; 
 import CategoryTabs from '../common/CategoryTabs.vue'; 
 import ArtikelGrid from '../card/ArtikelGrid.vue'; 
 
 import { allArticlesData } from '../../assets/dataSementara/articlesData.js'; 
+import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
+const route = useRoute();
 
 const isDesktop = ref(window.innerWidth >= 981); 
 
@@ -78,6 +103,14 @@ const categories = ref([
   { label: 'Tutorial', key: 'Tutorial' },
   { label: 'Informasi', key: 'Informasi' },
   { label: 'Tips & Trik', key: 'Tips & Trik' },
+  ]);
+
+const selectedAuthor = ref('');
+const authors = ref([
+  'Farhan',
+  'Nasrullah',
+  'Rafie',
+  'Yanto',
 ]);
 
 const activeTab = ref('Semua Artikel');
@@ -103,6 +136,13 @@ const filteredResults = computed(() => {
       article.author.toLowerCase().includes(query) 
     );
   }
+  
+  if (selectedAuthor.value) {
+  articlesToShow = articlesToShow.filter(article =>
+    article.author === selectedAuthor.value
+  );
+}
+
   return articlesToShow;
 });
 
@@ -179,6 +219,9 @@ const goToPage = (page) => {
 watch([activeTab, searchQuery], () => {
   currentPage.value = 1;
 });
+watch(selectedAuthor, () => {
+  currentPage.value = 1;
+});
 
 const performSearch = () => {
   console.log('Mencari:', searchQuery.value);
@@ -194,6 +237,12 @@ const handleResize = () => {
 
 onMounted(() => {
   window.addEventListener('resize', handleResize);
+if (route.query.author) {
+    selectedAuthor.value = route.query.author;
+  }
+});
+watch(() => route.fullPath, () => {
+  selectedAuthor.value = route.query.author || '';
 });
 
 onBeforeUnmount(() => {
@@ -224,6 +273,61 @@ onBeforeUnmount(() => {
   font-weight: 600;
   text-align: center;
   margin-bottom: 2rem;
+}
+
+.author-filter-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding-left: 1rem;
+  max-width: 300px;
+}
+
+.author-filter-label {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  font-size: 0.9rem;
+  gap: 0.4rem;
+  color: #154484;
+}
+
+.author-icon {
+  font-size: 1.1rem;
+  color: #154484;
+}
+
+.author-select {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #fff;
+  color: #333;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.2s;
+  min-width: 150px;
+}
+
+.author-select:focus {
+  outline: none;
+  border-color: #154484;
+}
+
+.author-clear-btn {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #999;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  padding: 0.2rem;
+}
+
+.author-clear-btn:hover {
+  color: #e53935;
 }
 
 .empty-state {
@@ -294,7 +398,7 @@ onBeforeUnmount(() => {
   padding: 0 0.2rem;
 }
 
-/* Responsive adjustments for pagination (jika perlu penyesuaian lebih lanjut) */
+/* Responsive adjustments for pagination */
 @media (max-width: 981px) {
   .pagination-controls {
     margin-top: 2rem;

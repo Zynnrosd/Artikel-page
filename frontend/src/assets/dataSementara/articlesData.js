@@ -8,7 +8,7 @@ export const allArticlesData = [
     title: 'Tips and Tricks for Studying More Effectively', 
     category: 'Tutorial',
     description: 'Belajar efektif adalah kunci keberhasilan akademik. Pelajari berbagai metode yang terbukti untuk membuat sesi belajar Anda lebih produktif dan efisien.', 
-    author: 'Bimbel Mandala Tim',
+    author: 'Farhan',
     createdAt: '2025-07-20T10:00:00Z',
     content: `
       <p>Belajar efektif adalah kunci keberhasilan akademik. Banyak siswa merasa menghabiskan berjam-jam di buku mereka, tetapi tidak melihat peningkatan yang signifikan dalam nilai atau pemahaman mereka. Ini sering kali bukan karena kurangnya usaha, melainkan karena metode belajar yang kurang efisien.</p>
@@ -27,7 +27,7 @@ export const allArticlesData = [
     title: 'New Updates on Bimbel Mandala Programs for 2025',
     category: 'Informasi',
     description: 'Temukan penambahan dan peningkatan terbaru pada program bimbingan belajar kami untuk tahun ajaran yang akan datang.',
-    author: 'Admin Bimbel',
+    author: 'Nasrullah',
     createdAt: '2025-07-18T14:30:00Z',
     content: `
       <p>Kami sangat gembira mengumumkan pembaruan besar pada program-program Bimbel Mandala untuk tahun 2025! Kami telah mendengarkan masukan dari siswa dan orang tua, serta menganalisis tren pendidikan terbaru untuk memberikan pengalaman belajar yang lebih baik.</p>
@@ -44,7 +44,7 @@ export const allArticlesData = [
     title: 'Mastering Time Management for Students',
     category: 'Tips & Trik',
     description: 'Strategi manajemen waktu yang efektif untuk menyeimbangkan akademisi, kegiatan ekstrakurikuler, dan kehidupan pribadi.',
-    author: 'Tutor Edukasi',
+    author: 'Rafie',
     createdAt: '2025-07-15T09:15:00Z',
     content: `
       <p>Manajemen waktu adalah keterampilan krusial bagi setiap siswa. Dengan begitu banyak mata pelajaran, tugas, dan kegiatan ekstrakurikuler, mudah sekali merasa kewalahan. Namun, dengan strategi yang tepat, Anda bisa menyeimbangkan semuanya dan bahkan memiliki waktu luang.</p>
@@ -61,7 +61,7 @@ export const allArticlesData = [
     category: 'Tutorial',
     title: 'How to Choose the Right Tutor for Your Needs',
     description: 'Panduan komprehensif untuk membantu siswa memilih tutor terbaik yang sesuai dengan gaya belajar dan tujuan mereka.',
-    author: 'Bimbel Mandala',
+    author: 'Yanto',
     createdAt: '2025-07-10T11:45:00Z',
     content: `
       <p>Memilih tutor yang tepat dapat membuat perbedaan besar dalam perjalanan belajar seorang siswa. Namun, dengan banyaknya pilihan yang tersedia, proses ini bisa jadi membingungkan.</p>
@@ -78,7 +78,7 @@ export const allArticlesData = [
     category: 'Informasi',
     title: 'Success Stories: How Our Students Achieved Their Dreams',
     description: 'Testimoni inspiratif dari siswa yang berhasil unggul dengan bantuan Bimbel Mandala dan mencapai impian mereka.',
-    author: 'Siswa Berprestasi',
+    author: 'Rafie',
     createdAt: '2025-07-05T16:00:00Z',
     content: `
       <p>Di Bimbel Mandala, kami bangga dengan kisah sukses siswa-siswa kami. Dari peningkatan nilai drastis hingga penerimaan di universitas impian, setiap cerita adalah bukti dedikasi dan metode pengajaran kami yang efektif.</p>
@@ -95,7 +95,7 @@ export const allArticlesData = [
     category: 'Tutorial',
     title: 'Understanding Complex Concepts in Science',
     description: 'Memecah konsep ilmiah yang sulit menjadi bagian-bagian yang lebih sederhana dan mudah dipahami untuk retensi yang lebih baik.',
-    author: 'Dr. Ilmiah',
+    author: 'Yanto',
     createdAt: '2025-07-01T08:30:00Z',
     content: `
       <p>Memahami konsep-konsep kompleks dalam sains seringkali menjadi tantangan bagi siswa. Kuncinya adalah memecah informasi besar menjadi potongan-potongan yang lebih kecil dan mudah dicerna.</p>
@@ -103,7 +103,7 @@ export const allArticlesData = [
       <p>Selain itu, latihan secara teratur adalah esensial. Mengerjakan soal-soal dan menjelaskan konsep kepada diri sendiri atau teman dapat memperkuat pemahaman Anda. Ingat, proses belajar adalah maraton, bukan sprint. Bersabarlah dengan diri sendiri dan rayakan setiap kemajuan.</p>
     `,
     tags: ['sains', 'konsep', 'belajar'],
-    status: 'draft', // Contoh status draft
+    status: 'draft',
   },
   {
     id: '7',
@@ -112,7 +112,7 @@ export const allArticlesData = [
     category: 'Tips & Trik',
     title: 'Meningkatkan Daya Ingat dengan Teknik Mnemonik',
     description: 'Pelajari berbagai teknik mnemonik untuk membantu Anda mengingat informasi kompleks dengan mudah dan cepat.',
-    author: 'Pakar Memori',
+    author: 'Farhan',
     createdAt: '2025-06-25T10:00:00Z',
     content: `
       <p>Teknik mnemonik adalah alat yang ampuh untuk meningkatkan daya ingat. Mereka membantu Anda mengkodekan informasi dengan cara yang lebih mudah diingat.</p>
@@ -129,7 +129,7 @@ export const allArticlesData = [
     category: 'Informasi',
     title: 'Pentingnya Tidur Cukup untuk Otak Pelajar',
     description: 'Bagaimana tidur yang berkualitas mempengaruhi kemampuan belajar dan konsentrasi siswa.',
-    author: 'Ahli Kesehatan',
+    author: 'Nasrullah',
     createdAt: '2025-06-20T14:00:00Z',
     content: `
       <p>Tidur yang cukup sering diabaikan oleh pelajar, padahal ini adalah fondasi penting untuk fungsi otak yang optimal.</p>
@@ -146,7 +146,7 @@ export const allArticlesData = [
     category: 'Tutorial',
     title: 'Cara Membuat Presentasi yang Menarik dan Efektif',
     description: 'Tips praktis untuk merancang presentasi yang tidak hanya informatif tetapi juga memukau audiens.',
-    author: 'Desainer Edukasi',
+    author: 'Yanto',
     createdAt: '2025-06-15T09:00:00Z',
     content: `
       <p>Presentasi yang baik tidak hanya menyampaikan informasi, tetapi juga memikat audiens. Kuncinya adalah kombinasi antara konten yang kuat dan penyampaian yang menarik.</p>
@@ -157,13 +157,13 @@ export const allArticlesData = [
     status: 'published',
   },
   {
-    id: '10', // Contoh ID baru jika Anda menambahkannya
+    id: '10', // Contoh ID baru
     image: '/src/assets/articles/artikel4.jpg',
     mainImage: '/src/assets/articles/artikel4.jpg',
     category: 'Tips & Trik',
     title: 'Memaksimalkan Belajar Online dengan Cepat',
     description: 'Tips dan trik terbaik untuk sukses dalam lingkungan belajar online yang serba cepat dan menantang.',
-    author: 'Pembelajar Digital',
+    author: 'Farhan',
     createdAt: '2025-06-10T11:00:00Z',
     content: `
       <p>Belajar online menawarkan fleksibilitas, tetapi juga membutuhkan disiplin. Untuk memaksimalkan pengalaman belajar Anda, penting untuk menciptakan lingkungan yang kondusif dan strategi yang efektif.</p>
@@ -175,5 +175,5 @@ export const allArticlesData = [
   },
 ];
 
-// dummyRelatedArticlesData kini tidak lagi dipakai secara langsung karena sudah digabung ke allArticlesData
+
 export const dummyRelatedArticlesData = [];

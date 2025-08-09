@@ -3,24 +3,17 @@ import SideBar from '../sideBar.vue';
 </script>
 
 <template>
-  <div class="dashboard-container">
-    <SideBar />
     <div class="main-content">
-      <router-view />
+        <router-view />
     </div>
-  </div>
 </template>
 
 <style scoped>
-.dashboard-container {
-  display: flex;
-  height: 100vh;
-  background-color: #f5f5f5;
-}
-
 .main-content {
-  flex: 1;
+  gap: 8px;
+  justify-content: space-between;
+  padding: 20px;
   overflow-y: auto;
-  padding: 2rem;
+  background-color: #0B2343;
 }
 </style>

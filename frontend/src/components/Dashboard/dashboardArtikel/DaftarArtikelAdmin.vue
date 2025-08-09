@@ -116,9 +116,9 @@ const handlePublish = (id) => {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   width: 100%;
   max-width: 1300px;
-  margin: 1.25rem auto;
-  height: calc(100vh - 3.5rem * 2); /* agar tinggi total tetap pas */
-  overflow-y: auto; /* hanya scroll di kotak putih */
+  margin: 0 auto;
+  height: calc(100vh - 3.5rem * 2); 
+  overflow-y: auto; 
   display: flex;
   flex-direction: column;
   color: black;
@@ -208,8 +208,8 @@ const handlePublish = (id) => {
 }
 
 .btn-action-draft {
-  background-color: #e0e7ff;
-  color: #3730a3;
+  background-color: #fff1e0;
+  color: #FB8312;
 }
 
 .btn-action-publish {

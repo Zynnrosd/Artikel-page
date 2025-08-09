@@ -54,14 +54,12 @@
             <span class="label-required">*</span>
           </label>
           <div class="input-wrapper">
-            <input 
-              type="text" 
-              id="author" 
-              v-model="form.author" 
-              placeholder="Nama penulis"
-              class="form-input"
-              required 
-            />
+            <select id="author" v-model="form.author" class="form-select" required>
+              <option value="" disabled>Pilih Penulis</option>
+              <option v-for="author in authors" :key="author.id" :value="author.name">
+              {{ author.name }}
+              </option>
+            </select>
           </div>
         </div>
 
@@ -99,7 +97,7 @@
                   <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
                 </svg>
                 <p class="upload-text">Klik untuk upload gambar</p>
-                <p class="upload-subtext">PNG, JPG, GIF hingga 10MB</p>
+                <p class="upload-subtext">PNG, JPG, GIF hingga 1MB</p>
               </div>
               <div v-if="imagePreview" class="image-preview">
                 <img :src="imagePreview" alt="Pratinjau Gambar" />
@@ -157,9 +155,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import EditorTiny from '@/components/artikel/EditorTiny.vue'
 import axios from 'axios';
 
 const router = useRouter();
@@ -172,11 +169,27 @@ const form = ref({
   imageFile: null,
 });
 
-const categories = ref(['Tutorial', 'Informasi', 'Tips & Trik', 'Berita', 'Edukasi', 'Teknologi', 'Lifestyle', 'Bisnis']);
+const authors = ref([
+  { id: 1, name: 'Farhan' },
+  { id: 2, name: 'Nasrullah' },
+  { id: 3, name: 'Rafie' },
+]);
+
+const categories = ref([
+  { id: 1, name: 'Tutorial' },
+  { id: 2, name: 'Informasi' },
+  { id: 3, name: 'Tips & Trik' }
+]);
+
 const imagePreview = ref(null);
 const loading = ref(false);
+
 const successMessage = ref('');
 const errorMessage = ref('');
+onMounted(() => {
+  successMessage.value = '';
+  errorMessage.value = '';
+});
 
 const wordCount = computed(() => {
   return form.value.content.trim().split(/\s+/).filter(word => word.length > 0).length;
@@ -185,10 +198,14 @@ const wordCount = computed(() => {
 const handleImageFileChange = (event) => {
   const file = event.target.files[0];
   if (file) {
-    if (file.size > 10 * 1024 * 1024) {
-      errorMessage.value = 'Ukuran file gambar tidak boleh lebih dari 10MB.';
-      return;
-    }
+    if (file.size > 1 * 1024 * 1024) {
+  errorMessage.value = 'Ukuran file gambar tidak boleh lebih dari 1MB.';
+  return;
+}
+  const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+  if (!validTypes.includes(file.type)) {    errorMessage.value = 'Format gambar harus PNG, JPG, atau JPEG.';
+  return;
+}
     
     form.value.imageFile = file;
     const reader = new FileReader();
@@ -311,7 +328,7 @@ const goBack = () => {
   background-color: #f0f2f5;
   display: flex;
   justify-content: center;
-  align-items: flex-start; /* supaya tidak selalu ke tengah vertikal */
+  align-items: flex-start; 
   min-height: 100vh;
   box-sizing: border-box;
 }
@@ -323,9 +340,9 @@ const goBack = () => {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   width: 100%;
   max-width: 1300px;
-  margin: 1.25rem auto;
-  height: calc(100vh - 2.5rem * 2); /* agar tinggi total tetap pas */
-  overflow-y: auto; /* hanya scroll di kotak putih */
+  margin: 0 auto;
+  height: calc(100vh - 2.5rem * 2); 
+  overflow-y: auto; 
   display: flex;
   flex-direction: column;
 }
@@ -340,7 +357,7 @@ const goBack = () => {
   font-size: 2rem;
   font-weight: 700;
   color: #1a202c;
-  margin: 0 0 0.5rem 0;
+  margin: 0;
 }
 
 .form-subtitle {
@@ -600,7 +617,7 @@ const goBack = () => {
   min-height: 250px;
   box-sizing: border-box;
   background-color: white;
-  overflow-y: auto; /* Ini yang membuat scroll internal */
+  overflow-y: auto; 
 }
 
 .form-textarea:focus {

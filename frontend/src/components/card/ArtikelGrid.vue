@@ -9,8 +9,12 @@
         <h2 class="article-title">{{ article.title }}</h2>
         <p class="article-description">{{ article.description }}</p>
         <div class="article-meta-list">
-          <span class="article-author-list">Oleh: {{ article.author }}</span>
-          <span class="article-time-list">🕒 {{ formatUploadTime(article.createdAt) }}</span>
+          <router-link 
+            class="article-author-list clickable-author" :to="{ name: 'Artikel', query: { author: article.author } }"
+          > Oleh: {{ article.author }}
+          </router-link>
+            <span class="article-time-list">🕒 {{ formatUploadTime(article.createdAt) }}
+            </span>
         </div>
         <button class="read-more-button" @click="$emit('readMore', article.id)">
           Baca Selengkapnya
@@ -111,7 +115,7 @@ const formatUploadTime = (dateString) => {
 }
 
 .article-image-container:hover .article-image {
-  transform: scale(1.1); /* efek zoom saat hover */
+  transform: scale(1.1);
 }
 
 .article-content {
@@ -203,6 +207,17 @@ const formatUploadTime = (dateString) => {
   background-color: #E67200;
 }
 
+.clickable-author {
+  color: #154484;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.clickable-author:hover {
+  text-decoration: underline;
+}
+
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
@@ -229,7 +244,7 @@ const formatUploadTime = (dateString) => {
 
 @media (max-width: 480px) {
   .articles-grid {
-    grid-template-columns: 1fr; /* Bikin 1 kolom aja di layar kecil */
+    grid-template-columns: 1fr;
   }
 
   .article-content {

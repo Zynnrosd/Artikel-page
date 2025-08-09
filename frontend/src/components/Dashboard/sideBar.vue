@@ -12,6 +12,7 @@
             <router-link
               class="nav-but"
               to="/dashboardadmin"
+              exact
               :class="{ active: activeMenu === 'Dashboard' }"
               @click.native="setActive('Dashboard')"
             >
@@ -94,6 +95,9 @@
                 <router-link :to="{ name: 'KelolaKategoriAdmin' }">Kelola Kategori</router-link>
               </li>
               <li>
+                <router-link :to="{ name: 'KelolaAuthorAdmin' }">Kelola Author</router-link>
+              </li>
+              <li>
                 <router-link :to="{ name: 'DaftarArtikelAdmin' }">Daftar Artikel</router-link>
               </li>
             </ul>
@@ -127,13 +131,22 @@ import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
 const router = useRouter();
+
 const sidebarOpen = ref(false);
-const activeMenu = ref('HomeAdmin'); // State untuk menu yang aktif
-const activeSubmenu = ref(null); // State untuk submenu yang aktif
+const sidebar = ref(null);
+const burger = ref(null);
+
+const activeMenu = ref('HomeAdmin');
+const activeSubmenu = ref(null);
 
 // Computed property untuk mengecek apakah salah satu rute artikel aktif
 const isArtikelParentActive = computed(() => {
-  return ['TambahArtikelAdmin', 'KelolaKategoriAdmin', 'DaftarArtikelAdmin'].includes(route.name);
+  return [
+    'TambahArtikelAdmin', 
+    'KelolaKategoriAdmin', 
+    'KelolaAuthorAdmin', 
+    'DaftarArtikelAdmin'
+  ].includes(route.name);
 });
 
 // Watcher untuk sinkronisasi menu dengan rute saat ini
@@ -148,12 +161,13 @@ watch(() => route.name, (newName) => {
   };
 
   if (adminRoutes[newName]) {
-    activeMenu.value = adminRoutes[newName];
-    activeSubmenu.value = null; // Tutup submenu jika mengklik menu utama
-  } else if (isArtikelParentActive.value) {
-    activeMenu.value = null; // Nonaktifkan menu utama
-    activeSubmenu.value = 'artikel'; // Buka submenu artikel
-  }
+  activeMenu.value = adminRoutes[newName];
+  activeSubmenu.value = null;
+} else if (isArtikelParentActive.value) {
+  activeMenu.value = null;
+  activeSubmenu.value = 'artikel';
+}
+
 }, { immediate: true });
 
 const toggleSidebar = () => {
@@ -169,6 +183,30 @@ const handleLogout = () => {
   localStorage.removeItem('token');
   router.push('/auth');
 };
+
+const handleClickOutside = (event) => {
+const isMobile = window.matchMedia('(max-width: 768px)').matches;
+if (
+  isMobile &&
+  sidebarOpen.value &&
+  sidebar.value &&
+  burger.value &&
+  !sidebar.value.contains(event.target) &&
+  !burger.value.contains(event.target)
+) 
+  {
+    sidebarOpen.value = false;
+}
+
+};
+
+onMounted(() => {
+document.addEventListener('click', handleClickOutside);
+});
+
+onBeforeUnmount(() => {
+document.removeEventListener('click', handleClickOutside);
+});
 </script>
 
 <style scoped>
@@ -276,7 +314,7 @@ const handleLogout = () => {
 
 .has-submenu {
     position: relative;
-    list-style: none; /* Pastikan list-style tidak muncul */
+    list-style: none;
 }
 
 .has-submenu a { /* Styling untuk parent link */
@@ -285,7 +323,7 @@ const handleLogout = () => {
     color: #fff;
     display: flex;
     align-items: center;
-    justify-content: space-between; /* Tambahkan ini agar panah di kanan */
+    justify-content: space-between;
     padding: 12px 16px;
     border-radius: 25px;
     transition: background-color 0.3s ease;
@@ -309,9 +347,7 @@ const handleLogout = () => {
 .submenu {
     list-style: none;
     padding: 0;
-    margin: 0.5rem 0 0.5rem 0; /* Hapus margin kiri */
-    /* Padding kiri ini yang akan membuat indentasi */
-    /* 44px adalah perkiraan dari (padding kiri nav-but 16px + lebar ikon 20px + gap 8px) */
+    margin: 0.5rem 0 0.5rem 0;
     padding-left: 44px;
     display: flex;
     flex-direction: column;
@@ -329,18 +365,16 @@ const handleLogout = () => {
 }
 
 .submenu a.router-link-exact-active {
-    /* Hapus background-color dan border-left */
-    background-color: transparent; /* Pastikan tidak ada warna latar belakang */
-    color: #fff; /* Jadikan warna teks putih agar lebih jelas */
-    position: relative; /* Penting agar pseudo-element bisa diposisikan */
+    background-color: transparent; 
+    color: #fff; 
+    position: relative; 
     padding-left: calc(2.85rem + 15px); 
   }
 
-/* Tambahkan panah > di sebelah kiri link */
 .submenu a.router-link-exact-active::before {
-    content: '>'; /* Karakter panah */
+    content: '>'; 
     position: absolute;
-    left: 1rem; /* Sesuaikan posisi panah */
+    left: 1rem;
     font-weight: bold;
     color: #fff;
 }

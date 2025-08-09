@@ -63,7 +63,8 @@ import DashboardBiaya from '@/components/Dashboard/dashboardCatatanBiaya/Dashboa
 import DetailProgramSelesai from '@/components/Dashboard/dashboardCatatanBiaya/DetailProgramSelesai.vue';
 
 import FormTambahArtikel from '@/components/Dashboard/dashboardArtikel/FormTambahArtikel.vue';
-import FormTambahKategori from '@/components/Dashboard/dashboardArtikel/FormTambahKategori.vue';
+import FormKelolaKategori from '@/components/Dashboard/dashboardArtikel/FormKelolaKategori.vue';
+import FormKelolaAuthor from '@/components/Dashboard/dashboardArtikel/FormKelolaAuthor.vue';
 import DaftarArtikelAdmin from '@/components/Dashboard/dashboardArtikel/DaftarArtikelAdmin.vue';
 import ArtikelAdminWrapper from '@/components/Dashboard/dashboardArtikel/ArtikelAdminWrapper.vue';
 
@@ -358,7 +359,12 @@ const routes = [
           {
             path: 'kategori',
             name: 'KelolaKategoriAdmin',
-            component: FormTambahKategori,
+            component: FormKelolaKategori,
+          },
+          {
+            path: 'author',
+            name: 'KelolaAuthorAdmin',
+            component: FormKelolaAuthor,
           },
           {
             path: 'daftar',
@@ -379,6 +385,7 @@ const router = createRouter({
 import { ref, onMounted } from 'vue'
 import path from 'path';
 import VerificationPage from '@/components/Dashboard/dashboardProgram/VerificationPage.vue';
+import FormTambahAuthor from '@/components/Dashboard/dashboardArtikel/FormKelolaAuthor.vue';
 
 const isTutor = ref(false)
 
