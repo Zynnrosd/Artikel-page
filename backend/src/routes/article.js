@@ -1,6 +1,7 @@
 import express from 'express';
 import articleController from '../controllers/article.js';
 import categoryController from '../controllers/category.js';
+import authorController from '../controllers/author.js'; // Import Author Controller
 import { AuthMiddleware } from '../middlewares/auth.js';
 import { upload } from '../middlewares/upload.js';
 import { 
@@ -100,5 +101,32 @@ router.delete('/admin/categories/:id',
   AuthMiddleware.hasRole(['admin']), 
   categoryController.deleteCategory
 );
+
+// ========== ADMIN AUTHOR ROUTES (Authentication Required) ==========
+
+// Admin Author routes - need authentication
+router.get('/admin/authors', 
+  AuthMiddleware.isAuthorized, 
+  AuthMiddleware.hasRole(['admin']), 
+  authorController.getAllAuthors
+); // Get all authors for admin
+
+router.post('/admin/authors', 
+  AuthMiddleware.isAuthorized, 
+  AuthMiddleware.hasRole(['admin']), 
+  authorController.createAuthor
+); // Create a new author
+
+router.put('/admin/authors/:id', 
+  AuthMiddleware.isAuthorized, 
+  AuthMiddleware.hasRole(['admin']), 
+  authorController.updateAuthor
+); // Update an existing author
+
+router.delete('/admin/authors/:id', 
+  AuthMiddleware.isAuthorized, 
+  AuthMiddleware.hasRole(['admin']), 
+  authorController.deleteAuthor
+); // Delete an author
 
 export default router;
