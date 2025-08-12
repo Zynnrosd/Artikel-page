@@ -1,3 +1,4 @@
+import 'quill/dist/quill.snow.css';
 import './assets/main.css'
 
 import { createApp } from 'vue'

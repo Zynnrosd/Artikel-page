@@ -166,7 +166,7 @@ const handlePublish = (id) => {
 .status-badge {
   padding: 0.25rem 0.75rem;
   border-radius: 20px;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 600;
   text-transform: capitalize;
 }
@@ -177,8 +177,8 @@ const handlePublish = (id) => {
 }
 
 .status-badge.draft {
-  background-color: #fee2e2;
-  color: #991b1b;
+  background-color: #ffeee0;
+  color: #FB8312;
 }
 
 .action-buttons {
@@ -191,7 +191,7 @@ const handlePublish = (id) => {
   padding: 0.4rem 0.8rem;
   border-radius: 20px;
   font-size: 0.8rem;
-  font-weight: 500;
+  font-weight: 600;
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -208,7 +208,7 @@ const handlePublish = (id) => {
 }
 
 .btn-action-draft {
-  background-color: #fff1e0;
+  background-color: #ffeee0;
   color: #FB8312;
 }
 

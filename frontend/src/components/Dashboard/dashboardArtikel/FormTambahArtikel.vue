@@ -71,7 +71,7 @@
           <div class="select-wrapper">
             <select id="category" v-model="form.category" class="form-select" required>
               <option value="" disabled>Pilih Kategori</option>
-              <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+              <option v-for="cat in categories" :key="cat.id" :value="cat.name">{{ cat.name }}</option>
             </select>
           </div>
         </div>
@@ -119,15 +119,9 @@
             <span class="label-text">Isi Artikel</span>
             <span class="label-required">*</span>
           </label>
-
-          <EditorTiny v-model="form.content" />
-
-          <div 
-            v-if="form.content" 
-            v-html="form.content" 
-            class="preview-output mt-4 p-4 bg-gray-50 border rounded">
-          </div>
+          <EditorQuill v-model="form.content" />
         </div>
+
       </div>
 
       <div class="form-actions">
@@ -158,6 +152,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import EditorQuill from '@/components/artikel/EditorQuill.vue';
 
 const router = useRouter();
 
@@ -189,10 +184,6 @@ const errorMessage = ref('');
 onMounted(() => {
   successMessage.value = '';
   errorMessage.value = '';
-});
-
-const wordCount = computed(() => {
-  return form.value.content.trim().split(/\s+/).filter(word => word.length > 0).length;
 });
 
 const handleImageFileChange = (event) => {
