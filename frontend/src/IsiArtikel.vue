@@ -13,7 +13,7 @@
 <script setup>
 import Navbar from './components/navbar.vue'; 
 import Footer from './components/footer.vue'; 
-import IsiArtikelContent from './components/artikel/IsiArtikelContent.vue'; // Impor komponen baru
+import IsiArtikelContent from './components/artikel/IsiArtikelContent.vue';
 </script>
 
 <style scoped>
@@ -26,16 +26,16 @@ import IsiArtikelContent from './components/artikel/IsiArtikelContent.vue'; // I
 
 .content-wrapper {
   flex-grow: 1;
-  padding: 1.5rem 2.5rem 2.5rem; /* Padding utama untuk 'kotak frame' */
-  max-width: 1200px; /* Lebar frame utama */
+  padding: 1.5rem 2.5rem 2.5rem;
+  max-width: 1200px;
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
-  margin-top: 4rem; /* Jarak dari Navbar */
-  background-color: white; /* Warna background 'kotak frame' */
-  border-radius: 8px; /* Sudut 'kotak frame' */
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); /* Bayangan 'kotak frame' */
-  margin-bottom: 4rem; /* Jarak bawah 'kotak frame' ke Footer */
+  margin-top: 4rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); 
+  margin-bottom: 4rem;
   transition: all 0.3s ease-in-out;
 }
 

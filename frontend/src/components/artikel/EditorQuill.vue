@@ -9,7 +9,6 @@ import { ref, onMounted, watch } from 'vue';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 
-// Daftar font custom
 const Font = Quill.import('formats/font');
 Font.whitelist = [
   'arial', 'times-new-roman', 'courier-new',
@@ -67,18 +66,15 @@ onMounted(() => {
     placeholder: 'Mulai menulis artikel Anda di sini...'
   });
 
-  // Set value awal
   if (props.modelValue) {
     quill.root.innerHTML = props.modelValue;
   }
 
-  // Update modelValue saat teks berubah
   quill.on('text-change', () => {
     emit('update:modelValue', quill.root.innerHTML);
   });
 });
 
-// Sinkronisasi jika value di luar berubah
 watch(() => props.modelValue, (newVal) => {
   if (quill && quill.root.innerHTML !== newVal) {
     quill.root.innerHTML = newVal || '';
@@ -110,7 +106,6 @@ watch(() => props.modelValue, (newVal) => {
   min-width: 60px;
 }
 
-/* Styling teks di editor */
 :deep(.ql-editor) {
   color: black;
   min-height: 400px;   
@@ -119,7 +114,6 @@ watch(() => props.modelValue, (newVal) => {
   line-height: 1.6;   
 }
 
-/* Styling font selector */
 :deep(.ql-font-arial) { font-family: Arial, sans-serif; }
 :deep(.ql-font-times-new-roman) { font-family: 'Times New Roman', serif; }
 :deep(.ql-font-courier-new) { font-family: 'Courier New', monospace; }
@@ -132,7 +126,6 @@ watch(() => props.modelValue, (newVal) => {
 :deep(.ql-font-calibri) { font-family: 'Calibri', sans-serif; }
 :deep(.ql-font-comic-sans) { font-family: 'Comic Sans MS', cursive, sans-serif; }
 
-/* ukursn font px */
 :deep(.ql-size-8px) { font-size: 8px; }
 :deep(.ql-size-9px) { font-size: 9px; }
 :deep(.ql-size-10px) { font-size: 10px; }
@@ -253,7 +246,6 @@ watch(() => props.modelValue, (newVal) => {
   content: "72px";
 }
 
-/* Tombol undo redo */
 :deep(.ql-undo::before) {
   content: '↺';
 }

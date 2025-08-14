@@ -156,7 +156,6 @@ const currentArticles = computed(() => {
   return filteredResults.value.slice(start, end); 
 });
 
-// Computed property untuk halaman yang terlihat (termasuk ellipsis)
 const visiblePages = computed(() => {
   const pages = [];
   const maxVisible = 5;
@@ -192,7 +191,6 @@ const visiblePages = computed(() => {
   return pages;
 });
 
-// Method untuk pindah ke halaman selanjutnya
 const nextPage = () => {
   if (currentPage.value < totalPages.value) {
     currentPage.value++;
@@ -200,7 +198,6 @@ const nextPage = () => {
   }
 };
 
-// Method untuk pindah ke halaman sebelumnya
 const prevPage = () => {
   if (currentPage.value > 1) {
     currentPage.value--;
@@ -208,7 +205,6 @@ const prevPage = () => {
   }
 };
 
-// Method untuk pindah ke halaman spesifik
 const goToPage = (page) => {
   if (page !== '...' && page >= 1 && page <= totalPages.value) {
     currentPage.value = page;

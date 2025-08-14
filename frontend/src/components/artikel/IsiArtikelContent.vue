@@ -98,38 +98,36 @@ watch(
 </script>
 
 <style scoped>
-.isi-artikel-content-container { /* Kontainer utama untuk semua konten di dalam content-wrapper */
+.isi-artikel-content-container {
   width: 100%;
   box-sizing: border-box;
-  /* Tidak ada background, shadow, border-radius di sini karena sudah di parent content-wrapper */
 }
 
-/* Tombol Kembali di level konten */
 .back-button-content {
-  background-color: #f0f2f5; /* Latar belakang mirip tombol kategori */
+  background-color: #f0f2f5;
   color: #555;
-  font-size: 0.rem; /* Ukuran font lebih kecil */
-  padding: 0.6rem 1rem; /* Padding seperti tombol */
-  border: 1px solid #d9d9d9; /* Border tipis */
-  border-radius: 20px; /* Lebih membulat seperti tombol */
+  font-size: 0.rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid #d9d9d9;
+  border-radius: 20px;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-bottom: 1rem; /* Disesuaikan: Jarak ke grid utama */
+  margin-bottom: 1rem;
   display: inline-flex;
   align-items: center;
   gap: 0.1rem;
-  text-decoration: none; /* Hapus underline */
+  text-decoration: none;
 }
 
 .back-button-content:hover {
   background-color: #e0e0e0;
-  color: #154484; /* Biru dongker saat hover */
+  color: #154484; 
   transform: translateY(-1px);
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 .back-button-content ion-icon {
-    font-size: 1rem; /* Ukuran icon */
-    margin-right: 0.1rem; /* Jarak icon dengan teks "Kembali" */
+    font-size: 1rem;
+    margin-right: 0.1rem;
 }
 
 .main-layout-grid {

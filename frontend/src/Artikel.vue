@@ -34,14 +34,14 @@ import ArtikelContent from './components/artikel/ArtikelContent.vue';
 }
 
 /* Responsive adjustments for Artikel.vue general layout */
-@media (max-width: 981px) { /* Untuk tablet dan mobile */
+@media (max-width: 981px) { 
   .content-wrapper {
     padding: 2rem 2rem; 
     max-width: 100%;
   }
 }
 
-@media (max-width: 480px) { /* Untuk ponsel kecil */
+@media (max-width: 480px) {
   .content-wrapper {
     padding: 5rem 1rem 1rem 1rem;
   }
