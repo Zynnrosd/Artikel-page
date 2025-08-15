@@ -64,7 +64,8 @@ const formatDate = (dateString) => {
 
 .article-title {
   font-size: 2.5rem;
-  color: #1a202c; 
+  color: #1a202c;
+  margin-top: 0.8rem;
   margin-bottom: 0.8rem;
   font-weight: 700;
   line-height: 1.25;
@@ -135,13 +136,15 @@ const formatDate = (dateString) => {
 }
 
 .clickable-author {
-  color: #154484;
+  color: #1E88E5;
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
+  transition: color 0.2s ease, text-decoration 0.2s ease;
 }
 
 .clickable-author:hover {
+  color: #1565C0;
   text-decoration: underline;
 }
 

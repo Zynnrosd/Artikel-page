@@ -2,6 +2,8 @@
   <div class="artikel-page">
     <Navbar />
 
+    <ArtikelHeader />
+
     <div class="content-wrapper">
       <ArtikelContent />
     </div>
@@ -13,6 +15,7 @@
 <script setup>
 import Navbar from './components/navbar.vue'; 
 import Footer from './components/footer.vue'; 
+import ArtikelHeader from './components/artikel/ArtikelHeader.vue';
 import ArtikelContent from './components/artikel/ArtikelContent.vue'; 
 
 </script>
@@ -22,14 +25,14 @@ import ArtikelContent from './components/artikel/ArtikelContent.vue';
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: #f8f8f8;
+  background-color: #ffffff;
 }
 
 .content-wrapper {
   flex-grow: 1;
-  padding: 2rem 4rem;
   width: 100%;
   box-sizing: border-box;
+  padding: o 3rem;
   transition: padding 0.3s ease;
 }
 

@@ -71,10 +71,11 @@ const formatDate = (dateString) => {
 
 .article-card {
   background-color: #fcfcfc;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
+  border: 2px solid transparent;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -82,8 +83,9 @@ const formatDate = (dateString) => {
 }
 
 .article-card:hover {
+  border: 2px solid rgba(0, 0, 0, 0.25);
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-  transform: translateY(-3px);
+  transform: scale(1.02);
 }
 
 .article-image-container {
@@ -143,7 +145,7 @@ const formatDate = (dateString) => {
   font-size: 0.75rem;
   color: #888;
   margin-top: 0.4rem;
-  margin-bottom: 0.4rem; 
+  margin-bottom: 0.4rem;
 }
 
 .read-more-button {
@@ -200,7 +202,7 @@ const formatDate = (dateString) => {
     font-size: 0.75rem;
     height: calc(0.75rem * 1.4 * 2);
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 2; 
     -webkit-box-orient: vertical;
     line-clamp: 2;
     overflow: hidden;

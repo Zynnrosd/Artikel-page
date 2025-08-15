@@ -9,10 +9,13 @@
         <h2 class="article-title">{{ article.title }}</h2>
         <p class="article-description">{{ article.description }}</p>
         <div class="article-meta-list">
-          <router-link 
-            class="article-author-list clickable-author" :to="{ name: 'Artikel', query: { author: article.author } }"
-          > Oleh: {{ article.author }}
-          </router-link>
+          <span 
+            class="article-author-list clickable-author"
+            @click="$emit('filterAuthor', article.author)"
+          >
+            Oleh: {{ article.author }}
+          </span>
+
             <span class="article-time-list">🕒 {{ formatUploadTime(article.createdAt) }}
             </span>
         </div>
@@ -38,7 +41,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['readMore']);
+const emit = defineEmits(['readMore', 'filterAuthor']);
 
 // Fungsi untuk format waktu unggah
 const formatUploadTime = (dateString) => {
@@ -84,6 +87,7 @@ const formatUploadTime = (dateString) => {
   background-color: white;
   border-radius: 12px;
   overflow: hidden;
+  border: 2px solid transparent;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   display: flex;
@@ -92,7 +96,8 @@ const formatUploadTime = (dateString) => {
 }
 
 .article-card:hover {
-  transform: translateY(-5px);
+  border: 2px solid rgba(0, 0, 0, 0.25);
+  transform: scale(1.02);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
@@ -101,8 +106,8 @@ const formatUploadTime = (dateString) => {
   height: 180px;
   overflow: hidden;
   position: relative;
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
 }
 
 .article-image {
@@ -161,7 +166,7 @@ const formatUploadTime = (dateString) => {
 .article-description {
   font-size: 0.95rem;
   color: #666;
-  margin-bottom: 1.2rem;
+  margin-bottom: 1rem;
   line-height: 1.5;
   height: calc(0.95rem * 1.5 * 2);
   display: -webkit-box;
@@ -208,13 +213,15 @@ const formatUploadTime = (dateString) => {
 }
 
 .clickable-author {
-  color: #154484;
+  color: #1E88E5;
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
+  transition: color 0.2s ease, text-decoration 0.2s ease;
 }
 
 .clickable-author:hover {
+  color: #1565C0;
   text-decoration: underline;
 }
 

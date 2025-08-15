@@ -104,27 +104,26 @@ watch(
 }
 
 .back-button-content {
-  background-color: #f0f2f5;
-  color: #555;
-  font-size: 0.rem;
+  background-color: #f9fafb;
+  color: #374151;
+  font-size: 0.9rem;
   padding: 0.6rem 1rem;
-  border: 1px solid #d9d9d9;
-  border-radius: 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 9999px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  margin-bottom: 1rem;
   display: inline-flex;
   align-items: center;
-  gap: 0.1rem;
-  text-decoration: none;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
 }
 
 .back-button-content:hover {
-  background-color: #e0e0e0;
-  color: #154484; 
+  background-color: #f3f4f6;
+  color: #154484;
   transform: translateY(-1px);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
+
 .back-button-content ion-icon {
     font-size: 1rem;
     margin-right: 0.1rem;
@@ -137,16 +136,18 @@ watch(
   align-items: flex-start;
 }
 
+.main-article-column {
+  max-width: 820px;
+}
+
 .loading-state, .empty-state {
   text-align: center;
   padding: 3rem 1.5rem;
-  color: #888;
+  color: #6b7280;
   font-size: 1rem;
-  grid-column: 1 / -1;
-  background-color: #f8f8f8;
+  background-color: #f9fafb;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  margin-top: 0.5rem;
 }
 
 /* Responsive adjustments */

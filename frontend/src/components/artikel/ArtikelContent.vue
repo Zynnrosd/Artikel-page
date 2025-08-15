@@ -1,55 +1,42 @@
 <template>
+
   <div class="artikel-content-container">
-    <h1 class="page-title">Artikel</h1>
-
-      <p v-if="activeTab === 'Semua Artikel'" class="selected-category-display">
-        Semua Kategori
-      </p>
-      <p v-else-if="activeTab !== 'Semua Artikel'" class="selected-category-display">
-        Kategori: {{ activeTab }}
-      </p>
-
-    <SearchBar v-model:searchQuery="searchQuery" @performSearch="performSearch" />
+    
+    <SearchBar 
+      v-model:searchQuery="searchQuery" 
+      @performSearch="performSearch" 
+    />
 
     <CategoryTabs 
       :categories="categories" 
       v-model:activeTab="activeTab" 
     />
 
-    <div class="author-filter-wrapper">
-    <label class="author-filter-label">
-      <ion-icon name="person-outline" class="author-icon" />
-        <select v-model="selectedAuthor" class="author-select">
-          <option value="">Semua Author</option>
-          <option 
-            v-for="author in authors" 
-            :key="author" 
-            :value="author"
-          > {{ author }}
-          </option>
-        </select>
-    </label>
+    <!-- Tombol hapus filter author -->
+    <button 
+      v-if="selectedAuthor" 
+      @click="clearAuthorFilter"
+      class="author-clear-btn"
+      title="Kembali ke semua artikel"
+    >
+    <ion-icon name="arrow-back-outline"></ion-icon>
+    </button>
 
-  <button 
-    v-if="selectedAuthor" 
-    @click="selectedAuthor = ''" 
-    class="author-clear-btn"
-    title="Clear filter"
-  >
-    <ion-icon name="close-outline"></ion-icon>
-  </button>
-</div>
-
-    <ArtikelGrid 
+    <!-- Daftar artikel -->
+    <ArtikelGrid
       v-if="currentArticles.length"
       :articles="currentArticles"
       :isDesktop="isDesktop"
       @readMore="goToArticleDetail"
-    />
+      @filterAuthor="filterByAuthor"
+      />
+
+    <!-- Empty State -->
     <div v-else class="empty-state">
       <p>Tidak ada artikel yang ditemukan untuk kategori atau pencarian ini.</p>
     </div>
 
+    <!-- Pagination -->
     <div v-if="totalPages > 1" class="pagination-controls">
       <button 
         class="pagination-button" 
@@ -59,6 +46,7 @@
         <ion-icon name="chevron-back-outline"></ion-icon> Previous
       </button>
 
+      <!-- Halaman -->
       <template v-for="page in visiblePages" :key="page">
         <span v-if="page === '...'" class="pagination-ellipsis">...</span>
         <button 
@@ -70,6 +58,7 @@
         </button>
       </template>
 
+      <!-- Next Button -->
       <button 
         class="pagination-button" 
         @click="nextPage" 
@@ -82,45 +71,38 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'; 
-
-import SearchBar from '../common/SearchBar.vue'; 
-import CategoryTabs from '../common/CategoryTabs.vue'; 
-import ArtikelGrid from '../card/ArtikelGrid.vue'; 
-
-import { allArticlesData } from '../../assets/dataSementara/articlesData.js'; 
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+
+import SearchBar from '../common/SearchBar.vue';
+import CategoryTabs from '../common/CategoryTabs.vue';
+import ArtikelGrid from '../card/ArtikelGrid.vue';
+
+import { allArticlesData } from '../../assets/dataSementara/articlesData.js';
 
 const router = useRouter();
 const route = useRoute();
 
-const isDesktop = ref(window.innerWidth >= 981); 
+// Responsive
+const isDesktop = ref(window.innerWidth >= 981);
 
-const allArticles = ref(allArticlesData); 
-
+// Data artikel
+const allArticles = ref(allArticlesData);
 const categories = ref([
   { label: 'Semua Artikel', key: 'Semua Artikel' },
   { label: 'Tutorial', key: 'Tutorial' },
   { label: 'Informasi', key: 'Informasi' },
   { label: 'Tips & Trik', key: 'Tips & Trik' },
-  ]);
-
-const selectedAuthor = ref('');
-const authors = ref([
-  'Farhan',
-  'Nasrullah',
-  'Rafie',
-  'Yanto',
 ]);
 
+const selectedAuthor = ref('');
 const activeTab = ref('Semua Artikel');
 const searchQuery = ref('');
-const loading = ref(false); 
-
-// --- Variabel Paginasi ---
 const currentPage = ref(1);
 const articlesPerPage = 8;
-const filteredResults = computed(() => { 
+
+// Filter artikel
+const filteredResults = computed(() => {
   let articlesToShow = allArticles.value;
 
   if (activeTab.value !== 'Semua Artikel') {
@@ -131,29 +113,35 @@ const filteredResults = computed(() => {
     const query = searchQuery.value.toLowerCase();
     articlesToShow = articlesToShow.filter(article =>
       article.title.toLowerCase().includes(query) ||
-      article.description.toLowerCase().includes(query) || 
+      article.description.toLowerCase().includes(query) ||
       article.category.toLowerCase().includes(query) ||
-      article.author.toLowerCase().includes(query) 
+      article.author.toLowerCase().includes(query)
     );
   }
-  
+
   if (selectedAuthor.value) {
-  articlesToShow = articlesToShow.filter(article =>
-    article.author === selectedAuthor.value
-  );
-}
+    articlesToShow = articlesToShow.filter(article => article.author === selectedAuthor.value);
+  }
 
   return articlesToShow;
 });
 
-const totalPages = computed(() => {
-  return Math.ceil(filteredResults.value.length / articlesPerPage);
-});
+const filterByAuthor = (author) => {
+  selectedAuthor.value = author;
+  router.push({ name: 'Artikel', query: { author } });
+};
+
+const clearAuthorFilter = () => {
+  selectedAuthor.value = '';
+  router.push({ name: 'Artikel' });
+};
+
+// Pagination
+const totalPages = computed(() => Math.ceil(filteredResults.value.length / articlesPerPage));
 
 const currentArticles = computed(() => {
   const start = (currentPage.value - 1) * articlesPerPage;
-  const end = start + articlesPerPage;
-  return filteredResults.value.slice(start, end); 
+  return filteredResults.value.slice(start, start + articlesPerPage);
 });
 
 const visiblePages = computed(() => {
@@ -162,30 +150,18 @@ const visiblePages = computed(() => {
   const half = Math.floor(maxVisible / 2);
 
   if (totalPages.value <= maxVisible) {
-    for (let i = 1; i <= totalPages.value; i++) {
-      pages.push(i);
-    }
+    for (let i = 1; i <= totalPages.value; i++) pages.push(i);
   } else {
     if (currentPage.value <= half + 1) {
-      for (let i = 1; i <= maxVisible - 1; i++) {
-        pages.push(i);
-      }
-      pages.push('...');
-      pages.push(totalPages.value);
+      for (let i = 1; i <= maxVisible - 1; i++) pages.push(i);
+      pages.push('...', totalPages.value);
     } else if (currentPage.value >= totalPages.value - half) {
-      pages.push(1);
-      pages.push('...');
-      for (let i = totalPages.value - maxVisible + 2; i <= totalPages.value; i++) {
-        pages.push(i);
-      }
+      pages.push(1, '...');
+      for (let i = totalPages.value - maxVisible + 2; i <= totalPages.value; i++) pages.push(i);
     } else {
-      pages.push(1);
-      pages.push('...');
-      for (let i = currentPage.value - half + 1; i <= currentPage.value + half - 1; i++) {
-        pages.push(i);
-      }
-      pages.push('...');
-      pages.push(totalPages.value);
+      pages.push(1, '...');
+      for (let i = currentPage.value - half + 1; i <= currentPage.value + half - 1; i++) pages.push(i);
+      pages.push('...', totalPages.value);
     }
   }
   return pages;
@@ -194,52 +170,56 @@ const visiblePages = computed(() => {
 const nextPage = () => {
   if (currentPage.value < totalPages.value) {
     currentPage.value++;
-    window.scrollTo({ top: 0, behavior: 'smooth' }); 
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 };
 
 const prevPage = () => {
   if (currentPage.value > 1) {
     currentPage.value--;
-    window.scrollTo({ top: 0, behavior: 'smooth' }); 
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 };
 
 const goToPage = (page) => {
   if (page !== '...' && page >= 1 && page <= totalPages.value) {
     currentPage.value = page;
-    window.scrollTo({ top: 0, behavior: 'smooth' }); 
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 };
 
-watch([activeTab, searchQuery], () => {
-  currentPage.value = 1;
-});
-watch(selectedAuthor, () => {
-  currentPage.value = 1;
-});
-
+// Pencarian
 const performSearch = () => {
   console.log('Mencari:', searchQuery.value);
 };
 
+// Navigasi detail artikel
 const goToArticleDetail = (id) => {
   router.push(`/artikel/${id}`);
 };
 
+// Responsive listener
 const handleResize = () => {
   isDesktop.value = window.innerWidth >= 981;
 };
 
 onMounted(() => {
   window.addEventListener('resize', handleResize);
-if (route.query.author) {
+  if (route.query.author) {
     selectedAuthor.value = route.query.author;
   }
 });
-watch(() => route.fullPath, () => {
-  selectedAuthor.value = route.query.author || '';
+
+watch([activeTab, searchQuery, selectedAuthor], () => {
+  currentPage.value = 1;
 });
+
+watch(
+  () => route.query.author,
+  (newAuthor) => {
+    selectedAuthor.value = newAuthor || '';
+  }
+);
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize);
@@ -248,82 +228,37 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .artikel-content-container {
-  max-width: 1400px; 
-  margin: 0 auto;
+  max-width: 1400px;
+  margin: 1.5rem auto;
   width: 100%;
   box-sizing: border-box;
-  padding: 0 4rem;
-}
-
-.page-title {
-  font-size: 3.5rem;
-  color: #154484;
-  margin-bottom: 0.5rem;
-  font-weight: 700;
-  text-align: center;
-}
-
-.selected-category-display {
-  font-size: 1.2rem;
-  color: #FB8312;
-  font-weight: 600;
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.author-filter-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
-  padding-left: 1rem;
-  max-width: 300px;
-}
-
-.author-filter-label {
-  display: flex;
-  align-items: center;
-  font-weight: 500;
-  font-size: 0.9rem;
-  gap: 0.4rem;
-  color: #154484;
-}
-
-.author-icon {
-  font-size: 1.1rem;
-  color: #154484;
-}
-
-.author-select {
-  padding: 0.4rem 0.8rem;
-  font-size: 0.9rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  background-color: #fff;
-  color: #333;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-  transition: border-color 0.2s;
-  min-width: 150px;
-}
-
-.author-select:focus {
-  outline: none;
-  border-color: #154484;
+  padding: 0 3rem;
 }
 
 .author-clear-btn {
-  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  margin: 0.2rem 1rem;
+  background-color: #154484;
+  color: white;
   border: none;
-  font-size: 1.1rem;
-  color: #999;
   cursor: pointer;
-  transition: color 0.2s ease;
-  padding: 0.2rem;
+  font-size: 1.2rem;
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .author-clear-btn:hover {
-  color: #e53935;
+  background-color: #FB8312; 
+  color: white;
+  transform: scale(1.05);
+}
+
+.author-clear-btn ion-icon {
+  font-size: 1.3rem;
 }
 
 .empty-state {
@@ -337,7 +272,7 @@ onBeforeUnmount(() => {
   margin-top: 2rem;
 }
 
-/* Pagination Controls */
+/* Pagination */
 .pagination-controls {
   display: flex;
   justify-content: center;
@@ -349,67 +284,47 @@ onBeforeUnmount(() => {
 }
 
 .pagination-button {
-  background-color: transparent; 
-  color: #154484; 
-  padding: 0.6rem 1rem; 
+  background-color: transparent;
+  color: #154484;
+  padding: 0.6rem 1rem;
   border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease; 
-  align-items: center;
-  gap: 0.3rem;
+  transition: all 0.2s ease;
   min-width: 35px;
-  justify-content: center;
 }
 
 .pagination-button:hover:not(:disabled) {
-  background-color: #f0f0f0; 
-  color: #154484;
+  background-color: #f0f0f0;
   transform: translateY(-1px);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .pagination-button:disabled {
-  background-color: transparent;
-  color: #cccccc; 
+  color: #ccc;
   cursor: not-allowed;
-  border-color: #e0e0e0;
 }
 
 .pagination-button.active {
-  background-color: #154484; 
+  background-color: #154484;
   color: white;
   border-color: #154484;
-  font-weight: 700; 
-  pointer-events: none; 
-  transform: none; 
-  box-shadow: none; 
+  font-weight: 700;
+  pointer-events: none;
 }
 
 .pagination-ellipsis {
   color: #888;
-  font-size: 1.1rem; 
-  padding: 0 0.2rem;
+  font-size: 1.1rem;
 }
 
-/* Responsive adjustments for pagination */
+/* Responsive */
 @media (max-width: 981px) {
-  .pagination-controls {
-    margin-top: 2rem;
-    padding-bottom: 2rem;
-    gap: 0.4rem;
-  }
-
   .pagination-button {
     padding: 0.5rem 0.8rem;
     font-size: 0.9rem;
     min-width: 30px;
-  }
-
-  .pagination-ellipsis {
-    font-size: 1rem;
   }
 }
 
@@ -419,9 +334,5 @@ onBeforeUnmount(() => {
     font-size: 0.8rem;
     min-width: 25px;
   }
-  .pagination-ellipsis {
-    font-size: 0.9rem;
-  }
 }
-
 </style>
