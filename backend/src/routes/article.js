@@ -1,43 +1,48 @@
 import express from 'express';
 import articleController from '../controllers/article.js';
 import categoryController from '../controllers/category.js';
-import authorController from '../controllers/author.js'; // Import Author Controller
+import authorController from '../controllers/author.js';
 import { AuthMiddleware } from '../middlewares/auth.js';
 import { upload } from '../middlewares/upload.js';
 import { 
   validateArticle, 
   validateCategory,
   validateArticleUpdate,
-  validateCategoryUpdate 
+  validateCategoryUpdate,
+  validateAuthor,
+  validateAuthorUpdate
 } from '../middlewares/validation/article.js';
 
 const router = express.Router();
 
 // ========== PUBLIC ROUTES (No Authentication Required) ==========
 
-// Public Article routes
-router.get('/public/articles', articleController.getPublishedArticles); // All published articles for public
-router.get('/public/articles/:slug', articleController.getPublishedArticleBySlug); // Single article by slug for public
-router.get('/public/categories/:categoryId/articles', articleController.getArticlesByCategory); // Published articles by category for public
+router.get('/public/articles', articleController.getPublishedArticles); // Frontend artikel list page
+router.get('/public/articles/:id', articleController.getPublishedArticleBySlug); // Frontend artikel detail page
+router.get('/public/articles/:id/related', articleController.getRelatedArticles); // ✅ NEW: Related articles
 
-// Public Category routes
-router.get('/public/categories', categoryController.getAllCategories); // All categories for public
-router.get('/public/categories/with-count', categoryController.getCategoriesWithCount); // Categories with article count for public
-router.get('/public/categories/:id', categoryController.getCategoryById); // Single category for public
 
-// Alternative public routes (backward compatibility)
+router.get('/public/categories', categoryController.getAllCategories); // Frontend category tabs
+router.get('/public/categories/with-count', categoryController.getCategoriesWithCount); // Frontend with article counts
+router.get('/public/categories/:id', categoryController.getCategoryById);
+router.get('/public/categories/:categoryId/articles', articleController.getArticlesByCategory); // Articles by category
+
+// ✅ FRONTEND NEEDS: Public Authors for filter
+router.get('/public/authors', articleController.getUniqueAuthors); // Frontend author filter dropdown
+
+// Alternative routes for backward compatibility
 router.get('/articles/published', articleController.getPublishedArticles);
-router.get('/articles/published/:slug', articleController.getPublishedArticleBySlug);
+router.get('/articles/published/:id', articleController.getPublishedArticleBySlug);
 router.get('/articles/category/:categoryId/published', articleController.getArticlesByCategory);
 
 // ========== ADMIN ROUTES (Authentication Required) ==========
 
-// Admin Article routes - need authentication
+// ✅ FRONTEND ADMIN NEEDS: Article management routes
 router.get('/admin/articles', 
   AuthMiddleware.isAuthorized, 
   AuthMiddleware.hasRole(['admin']), 
   articleController.getAllArticles
-); // Admin view all articles (published & unpublished)
+); // Admin dashboard articles list
 
 router.get('/admin/articles/:id', 
   AuthMiddleware.isAuthorized, 
@@ -45,88 +50,100 @@ router.get('/admin/articles/:id',
   articleController.getArticleById
 ); // Admin view single article
 
-router.get('/admin/articles/category/:categoryId', 
-  AuthMiddleware.isAuthorized, 
-  AuthMiddleware.hasRole(['admin']), 
-  articleController.getArticlesByCategory
-); // Admin view articles by category (including unpublished)
-
-// CRUD operations - Admin only
+// ✅ FRONTEND FORM: Create new article
 router.post('/admin/articles', 
   AuthMiddleware.isAuthorized, 
   AuthMiddleware.hasRole(['admin']), 
-  upload.single('featured_image'), 
-  validateArticle, // ✅ Untuk CREATE - validasi lengkap
+  upload.single('mainImage'), // ✅ FRONTEND SENDS: 'mainImage' field
+  validateArticle,
   articleController.createArticle
 );
 
+// ✅ FRONTEND FORM: Update existing article
 router.put('/admin/articles/:id', 
   AuthMiddleware.isAuthorized, 
   AuthMiddleware.hasRole(['admin']), 
-  upload.single('featured_image'), 
-  validateArticleUpdate, // ✅ Untuk UPDATE - validasi partial
+  upload.single('mainImage'), // ✅ FRONTEND SENDS: 'mainImage' field for updates
+  validateArticleUpdate,
   articleController.updateArticle
 );
 
-// Toggle publish status
+// ✅ FRONTEND BUTTONS: Toggle publish/draft status
 router.patch('/admin/articles/:id/toggle-publish', 
   AuthMiddleware.isAuthorized, 
   AuthMiddleware.hasRole(['admin']), 
   articleController.togglePublishStatus
 );
 
+// ✅ FRONTEND BUTTON: Delete article
 router.delete('/admin/articles/:id', 
   AuthMiddleware.isAuthorized, 
   AuthMiddleware.hasRole(['admin']), 
   articleController.deleteArticle
 );
 
-// Admin Category routes - need authentication
+// ========== ADMIN CATEGORY MANAGEMENT ==========
+
+// ✅ FRONTEND NEEDS: Category management for dropdown populate
+router.get('/admin/categories', 
+  AuthMiddleware.isAuthorized, 
+  AuthMiddleware.hasRole(['admin']), 
+  categoryController.getAllCategories
+); // Get categories for form dropdowns
+
+// ✅ FRONTEND FORM: Create new category
 router.post('/admin/categories', 
   AuthMiddleware.isAuthorized, 
   AuthMiddleware.hasRole(['admin']), 
-  validateCategory, // ✅ Untuk CREATE - validasi lengkap
+  validateCategory,
   categoryController.createCategory
 );
 
+// ✅ FRONTEND FORM: Update existing category
 router.put('/admin/categories/:id', 
   AuthMiddleware.isAuthorized, 
   AuthMiddleware.hasRole(['admin']), 
-  validateCategoryUpdate, // ✅ Untuk UPDATE - validasi partial
+  validateCategoryUpdate,
   categoryController.updateCategory
 );
 
+// ✅ FRONTEND BUTTON: Delete category
 router.delete('/admin/categories/:id', 
   AuthMiddleware.isAuthorized, 
   AuthMiddleware.hasRole(['admin']), 
   categoryController.deleteCategory
 );
 
-// ========== ADMIN AUTHOR ROUTES (Authentication Required) ==========
+// ========== ADMIN AUTHOR MANAGEMENT ==========
 
-// Admin Author routes - need authentication
+// ✅ FRONTEND NEEDS: Author management for dropdown populate
 router.get('/admin/authors', 
   AuthMiddleware.isAuthorized, 
   AuthMiddleware.hasRole(['admin']), 
   authorController.getAllAuthors
-); // Get all authors for admin
+); // Get authors for form dropdowns
 
+// ✅ FRONTEND FORM: Create new author
 router.post('/admin/authors', 
   AuthMiddleware.isAuthorized, 
   AuthMiddleware.hasRole(['admin']), 
+  validateAuthor,
   authorController.createAuthor
-); // Create a new author
+);
 
+// ✅ FRONTEND FORM: Update existing author
 router.put('/admin/authors/:id', 
   AuthMiddleware.isAuthorized, 
   AuthMiddleware.hasRole(['admin']), 
+  validateAuthorUpdate,
   authorController.updateAuthor
-); // Update an existing author
+);
 
+// ✅ FRONTEND BUTTON: Delete author
 router.delete('/admin/authors/:id', 
   AuthMiddleware.isAuthorized, 
   AuthMiddleware.hasRole(['admin']), 
   authorController.deleteAuthor
-); // Delete an author
+);
 
 export default router;

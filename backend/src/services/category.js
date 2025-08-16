@@ -3,12 +3,35 @@ import { HttpError } from '../utils/error.js';
 import { randomUUID } from 'crypto';
 
 const categoryService = {
+  // ✅ HELPER: Transform database row to frontend format
+  transformCategoryForFrontend(category) {
+    if (!category) return null;
+    
+    return {
+      id: category.id_kategori,
+      name: category.nama_kategori,
+      label: category.nama_kategori, // For frontend dropdown compatibility
+      key: category.nama_kategori,   // For frontend CategoryTabs compatibility
+      createdAt: category.created_at,
+      updatedAt: category.updated_at,
+      author: category.author_name,
+      // Keep original fields for admin use
+      id_kategori: category.id_kategori,
+      nama_kategori: category.nama_kategori,
+      author_id: category.author_id,
+      author_name: category.author_name,
+      author_email: category.author_email,
+      author_display: category.author_name
+    };
+  },
+
   // Get all categories with pagination
   async getAllCategories(options = {}) {
     const {
       page = 1,
       limit = 10,
-      search
+      search,
+      includeArticleCount = false
     } = options;
 
     const offset = (page - 1) * limit;
@@ -36,34 +59,61 @@ const categoryService = {
     const totalItems = Number(countResult[0].total);
     const totalPages = Math.ceil(totalItems / limit);
 
-    // ✅ PERUBAHAN: Query categories tanpa custom_author
-    const categoriesQuery = `
-      SELECT 
-        c.id_kategori,
-        c.nama_kategori,
-        c.created_at,
-        c.updated_at,
-        u.id as author_id,
-        u.name as author_name,
-        u.email as author_email
-      FROM categories c
-      LEFT JOIN users u ON c.author_id = u.id
-      ${whereClause}
-      ORDER BY c.created_at DESC
-      LIMIT ? OFFSET ?
-    `;
+    // Build categories query with optional article count
+    let categoriesQuery;
+    if (includeArticleCount) {
+      categoriesQuery = `
+        SELECT 
+          c.id_kategori,
+          c.nama_kategori,
+          c.created_at,
+          c.updated_at,
+          u.id as author_id,
+          u.name as author_name,
+          u.email as author_email,
+          COUNT(a.id) as total_articles,
+          COUNT(CASE WHEN a.published_at IS NOT NULL THEN 1 END) as published_articles
+        FROM categories c
+        LEFT JOIN users u ON c.author_id = u.id
+        LEFT JOIN articles a ON c.id_kategori = a.category_id
+        ${whereClause}
+        GROUP BY c.id_kategori, c.nama_kategori, c.created_at, c.updated_at, u.id, u.name, u.email
+        ORDER BY c.created_at DESC
+        LIMIT ? OFFSET ?
+      `;
+    } else {
+      categoriesQuery = `
+        SELECT 
+          c.id_kategori,
+          c.nama_kategori,
+          c.created_at,
+          c.updated_at,
+          u.id as author_id,
+          u.name as author_name,
+          u.email as author_email
+        FROM categories c
+        LEFT JOIN users u ON c.author_id = u.id
+        ${whereClause}
+        ORDER BY c.created_at DESC
+        LIMIT ? OFFSET ?
+      `;
+    }
 
     queryParams.push(limit, offset);
     const categories = await prisma.$queryRawUnsafe(categoriesQuery, ...queryParams);
 
-    // ✅ PERUBAHAN: author_display hanya menggunakan author_name
-    const categoriesWithAuthor = categories.map(category => ({
-      ...category,
-      author_display: category.author_name // Tidak ada custom_author lagi
-    }));
+    // Transform categories for frontend
+    const transformedCategories = categories.map(category => {
+      const transformed = this.transformCategoryForFrontend(category);
+      if (includeArticleCount) {
+        transformed.total_articles = Number(category.total_articles) || 0;
+        transformed.published_articles = Number(category.published_articles) || 0;
+      }
+      return transformed;
+    });
 
     return {
-      categories: categoriesWithAuthor,
+      categories: transformedCategories,
       currentPage: page,
       totalPages,
       totalItems,
@@ -72,32 +122,75 @@ const categoryService = {
     };
   },
 
-  // Get single category by ID
-  async getCategoryById(id) {
-    // ✅ PERUBAHAN: Query category tanpa custom_author
+  // ✅ NEW: Get categories for frontend dropdown (simplified)
+  async getCategoriesForDropdown() {
     const query = `
       SELECT 
         c.id_kategori,
-        c.nama_kategori,
-        c.created_at,
-        c.updated_at,
-        u.id as author_id,
-        u.name as author_name,
-        u.email as author_email
+        c.nama_kategori
       FROM categories c
-      LEFT JOIN users u ON c.author_id = u.id
-      WHERE c.id_kategori = ? AND c.deleted_at IS NULL
+      WHERE c.deleted_at IS NULL
+      ORDER BY c.nama_kategori ASC
     `;
 
-    const rows = await prisma.$queryRawUnsafe(query, id);
+    const categories = await prisma.$queryRawUnsafe(query);
+    
+    // Format for frontend CategoryTabs component
+    const formattedCategories = [
+      { label: 'Semua Artikel', key: 'Semua Artikel' }, // Default "All" option
+      ...categories.map(category => ({
+        label: category.nama_kategori,
+        key: category.nama_kategori,
+        id: category.id_kategori
+      }))
+    ];
+
+    return formattedCategories;
+  },
+
+  // Get single category by ID or name
+  async getCategoryById(identifier) {
+    let query, param;
+    
+    // Support both ID and name lookup
+    if (typeof identifier === 'string' && isNaN(identifier)) {
+      // Look up by name
+      query = `
+        SELECT 
+          c.id_kategori,
+          c.nama_kategori,
+          c.created_at,
+          c.updated_at,
+          u.id as author_id,
+          u.name as author_name,
+          u.email as author_email
+        FROM categories c
+        LEFT JOIN users u ON c.author_id = u.id
+        WHERE c.nama_kategori = ? AND c.deleted_at IS NULL
+      `;
+      param = identifier;
+    } else {
+      // Look up by ID
+      query = `
+        SELECT 
+          c.id_kategori,
+          c.nama_kategori,
+          c.created_at,
+          c.updated_at,
+          u.id as author_id,
+          u.name as author_name,
+          u.email as author_email
+        FROM categories c
+        LEFT JOIN users u ON c.author_id = u.id
+        WHERE c.id_kategori = ? AND c.deleted_at IS NULL
+      `;
+      param = identifier;
+    }
+
+    const rows = await prisma.$queryRawUnsafe(query, param);
     const category = rows[0] || null;
     
-    if (category) {
-      // ✅ PERUBAHAN: author_display hanya menggunakan author_name
-      category.author_display = category.author_name; // Tidak ada custom_author lagi
-    }
-    
-    return category;
+    return this.transformCategoryForFrontend(category);
   },
 
   // Create new category
@@ -105,13 +198,20 @@ const categoryService = {
     const {
       nama_kategori,
       author_id
-      // ✅ PERUBAHAN: custom_author dihapus dari parameter
     } = categoryData;
+
+    // Validate required fields
+    if (!nama_kategori || nama_kategori.trim() === '') {
+      throw new HttpError(400, { 
+        message: 'Category name is required',
+        errors: null
+      });
+    }
 
     // Check if category name already exists
     const existing = await prisma.$queryRawUnsafe(
       'SELECT id_kategori FROM categories WHERE nama_kategori = ? AND deleted_at IS NULL',
-      nama_kategori
+      nama_kategori.trim()
     );
 
     if (existing.length > 0) {
@@ -124,7 +224,6 @@ const categoryService = {
     // Generate UUID for category ID
     const categoryId = randomUUID();
 
-    // ✅ PERUBAHAN: Insert query tanpa custom_author
     const insertQuery = `
       INSERT INTO categories (
         id_kategori, nama_kategori, author_id, created_at, updated_at
@@ -133,9 +232,8 @@ const categoryService = {
 
     await prisma.$executeRawUnsafe(insertQuery, 
       categoryId,
-      nama_kategori,
+      nama_kategori.trim(),
       author_id
-      // custom_author dihapus dari parameter
     );
 
     return await this.getCategoryById(categoryId);
@@ -146,7 +244,6 @@ const categoryService = {
     console.log('=== UPDATE CATEGORY SERVICE DEBUG ===');
     console.log('Category ID:', id);
     console.log('Update data received:', updateData);
-    console.log('Update data keys:', Object.keys(updateData));
     
     // Check if category exists
     const existingCategory = await this.getCategoryById(id);
@@ -157,21 +254,25 @@ const categoryService = {
       });
     }
 
-    // ✅ PERUBAHAN: allowedFields hanya nama_kategori
-    const allowedFields = ['nama_kategori']; // custom_author dihapus
+    const allowedFields = ['nama_kategori'];
     const updateFields = [];
     const updateValues = [];
 
     Object.keys(updateData).forEach(key => {
-      console.log(`Processing field: ${key} = ${updateData[key]} (type: ${typeof updateData[key]})`);
+      console.log(`Processing field: ${key} = ${updateData[key]}`);
       
       if (allowedFields.includes(key) && updateData[key] !== undefined) {
         if (key === 'nama_kategori') {
+          if (!updateData[key] || updateData[key].trim() === '') {
+            throw new HttpError(400, { 
+              message: 'Category name cannot be empty',
+              errors: null
+            });
+          }
           updateFields.push('nama_kategori = ?');
-          updateValues.push(updateData[key]);
-          console.log(`Added nama_kategori to update: ${updateData[key]}`);
+          updateValues.push(updateData[key].trim());
+          console.log(`Added nama_kategori to update: ${updateData[key].trim()}`);
         }
-        // ✅ PERUBAHAN: custom_author handling dihapus
       } else {
         console.log(`Field ${key} skipped - not allowed or undefined`);
       }
@@ -191,7 +292,7 @@ const categoryService = {
     if (updateData.nama_kategori) {
       const existing = await prisma.$queryRawUnsafe(
         'SELECT id_kategori FROM categories WHERE nama_kategori = ? AND id_kategori != ? AND deleted_at IS NULL',
-        updateData.nama_kategori, id
+        updateData.nama_kategori.trim(), id
       );
 
       if (existing.length > 0) {
@@ -262,7 +363,6 @@ const categoryService = {
 
   // Get categories with article count
   async getCategoriesWithArticleCount() {
-    // ✅ PERUBAHAN: Query tanpa custom_author
     const query = `
       SELECT 
         c.id_kategori,
@@ -282,11 +382,12 @@ const categoryService = {
 
     const categories = await prisma.$queryRawUnsafe(query);
     
-    // ✅ PERUBAHAN: author_display hanya menggunakan author_name
-    return categories.map(category => ({
-      ...category,
-      author_display: category.author_name // Tidak ada custom_author lagi
-    }));
+    return categories.map(category => {
+      const transformed = this.transformCategoryForFrontend(category);
+      transformed.total_articles = Number(category.total_articles) || 0;
+      transformed.published_articles = Number(category.published_articles) || 0;
+      return transformed;
+    });
   }
 };
 

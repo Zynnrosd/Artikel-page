@@ -28,6 +28,8 @@ async function main() {
     allowedHeaders: ['Content-Type', 'Authorization']
   }));
 
+  // Serve uploaded images
+  app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
   app.use(express.static(path.resolve(__dirname, '../public')));
 
   app.use(morgan('dev'));
@@ -39,9 +41,13 @@ async function main() {
   res.sendFile(path.resolve(__dirname, '../public/index.html'));
   });
 
-  //bug refresh register
   app.get('/auth', (req, res) => {
   res.sendFile(path.resolve(__dirname, '../public/index.html'));
+  });
+
+  // Handle frontend artikel routes
+  app.get('/artikel*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../public/index.html'));
   });
 
   app.get('*', (req, res, next) => {
@@ -58,8 +64,10 @@ async function main() {
       req.path.startsWith('/orders') ||
       req.path.startsWith('/apply') ||
       req.path.startsWith('/salaries') ||
-       req.path.startsWith('/articles') ||      
-      req.path.startsWith('/categories')   
+      req.path.startsWith('/articles') ||      
+      req.path.startsWith('/categories') ||
+      req.path.startsWith('/authors') ||
+      req.path.startsWith('/uploads')
     ) return next();
     res.sendFile(path.resolve(__dirname, '../public/index.html'));
   });

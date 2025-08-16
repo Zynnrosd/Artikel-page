@@ -1,7 +1,7 @@
 import articleService from '../services/article.js';
 import { asyncWrapper } from '../utils/asyncWrapper.js';
 import { HttpError } from '../utils/error.js';
-import { cleanupTempFile } from '../middlewares/upload.js'; // Hanya import cleanup
+import { cleanupTempFile } from '../middlewares/upload.js';
 
 const articleController = {
 
@@ -43,14 +43,15 @@ const articleController = {
 
   // Get published articles for public view
   getPublishedArticles: asyncWrapper(async (req, res) => {
-    const { page = 1, limit = 10, category, search } = req.query;
+    const { page = 1, limit = 10, category, search, author } = req.query;
     
     const options = {
       page: parseInt(page),
       limit: parseInt(limit),
       category,
       search,
-      published: true // Only published articles
+      author, // ✅ ADDED: Support author filter for frontend
+      published: true
     };
 
     const result = await articleService.getPublishedArticles(options);
@@ -84,7 +85,7 @@ const articleController = {
     });
   }),
 
-  // Get published article by slug (for public view)
+  // Get published article by slug or ID (for public view)
   getPublishedArticleBySlug: asyncWrapper(async (req, res) => {
     const { slug } = req.params;
     const article = await articleService.getArticleById(slug);
@@ -115,33 +116,43 @@ const articleController = {
       // Handle form-data parsing
       let parsedBody = { ...req.body };
       
-      // Convert string 'true'/'false' to boolean for is_published
-      if (parsedBody.is_published) {
-        parsedBody.is_published = parsedBody.is_published === 'true' || parsedBody.is_published === true;
-      } else {
-        parsedBody.is_published = false;
+      // ✅ FRONTEND MAPPING: Map frontend fields to backend fields
+      const articleData = {
+        title: parsedBody.title?.trim(),
+        content: parsedBody.content?.trim(),
+        category_id: parsedBody.category, // ✅ Frontend sends 'category', backend expects 'category_id'
+        custom_author: parsedBody.author?.trim(), // ✅ Frontend sends 'author', backend expects 'custom_author'
+        author_id: res.locals.user.id,
+        is_published: true, // ✅ Frontend always publishes directly
+        featured_image: null
+      };
+      
+      // ✅ VALIDATION: Ensure required fields
+      if (!articleData.title) {
+        throw new HttpError('Title is required', 400);
       }
       
-      // ✅ VALIDASI TAMBAHAN: Pastikan custom_author tidak kosong
-      if (!parsedBody.custom_author || parsedBody.custom_author.trim() === '') {
-        throw new HttpError('Custom author is required and cannot be empty', 400);
+      if (!articleData.content) {
+        throw new HttpError('Content is required', 400);
       }
       
-      console.log('Parsed body:', parsedBody);
+      if (!articleData.category_id) {
+        throw new HttpError('Category is required', 400);
+      }
       
-      // ✅ PERUBAHAN: Langsung gunakan filename dari temp folder
-      // Tidak perlu moveFileFromTemp lagi
-      let imageFilename = null;
+      if (!articleData.custom_author) {
+        throw new HttpError('Author is required', 400);
+      }
+      
+      // Handle file upload
       if (req.file) {
         console.log('Using uploaded file from temp:', req.file.filename);
-        imageFilename = req.file.filename; // Langsung gunakan filename dari temp
+        articleData.featured_image = req.file.filename;
       }
       
-      const articleData = {
-        ...parsedBody,
-        author_id: res.locals.user.id,
-        featured_image: imageFilename // File tetap di temp folder
-      };
+      if (!articleData.featured_image) {
+        throw new HttpError('Featured image is required', 400);
+      }
 
       console.log('Final article data:', articleData);
 
@@ -154,12 +165,10 @@ const articleController = {
       });
       
     } catch (error) {
-      // ✅ PERUBAHAN: Hanya cleanup temp file jika ada error
       if (req.file) {
         console.log('Cleaning up temp file due to error:', req.file.filename);
         cleanupTempFile(req.file.filename);
       }
-      
       throw error;
     }
   }),
@@ -175,32 +184,39 @@ const articleController = {
       // Handle form-data parsing
       let parsedBody = { ...req.body };
       
-      // Convert string 'true'/'false' to boolean for is_published
-      if (parsedBody.is_published !== undefined) {
-        parsedBody.is_published = parsedBody.is_published === 'true' || parsedBody.is_published === true;
+      // ✅ FRONTEND MAPPING: Map frontend fields to backend fields
+      const updateData = {};
+      
+      if (parsedBody.title !== undefined) {
+        updateData.title = parsedBody.title?.trim();
       }
       
-      // ✅ VALIDASI TAMBAHAN: Jika custom_author ada dalam update, pastikan tidak kosong
-      if (parsedBody.custom_author !== undefined && 
-          (!parsedBody.custom_author || parsedBody.custom_author.trim() === '')) {
-        throw new HttpError('Custom author cannot be empty', 400);
+      if (parsedBody.content !== undefined) {
+        updateData.content = parsedBody.content?.trim();
       }
       
-      // ✅ PERUBAHAN: Langsung gunakan filename dari temp folder
-      let imageFilename = undefined;
+      if (parsedBody.category !== undefined) {
+        updateData.category_id = parsedBody.category; // Frontend sends 'category'
+      }
+      
+      if (parsedBody.author !== undefined) {
+        updateData.custom_author = parsedBody.author?.trim(); // Frontend sends 'author'
+      }
+      
+      // Handle publish status changes (draft/publish buttons)
+      if (parsedBody.status !== undefined) {
+        updateData.is_published = parsedBody.status === 'published';
+      }
+      
+      // Handle file upload
       if (req.file) {
         console.log('Using uploaded file from temp:', req.file.filename);
-        imageFilename = req.file.filename; // Langsung gunakan filename dari temp
+        updateData.featured_image = req.file.filename;
       }
-      
-      const updateData = {
-        ...parsedBody,
-        featured_image: imageFilename // undefined jika tidak ada file baru
-      };
 
       // Remove undefined values
       Object.keys(updateData).forEach(key => {
-        if (updateData[key] === undefined) {
+        if (updateData[key] === undefined || updateData[key] === '') {
           delete updateData[key];
         }
       });
@@ -216,17 +232,15 @@ const articleController = {
       });
       
     } catch (error) {
-      // ✅ PERUBAHAN: Hanya cleanup temp file jika ada error
       if (req.file) {
         console.log('Cleaning up temp file due to error:', req.file.filename);
         cleanupTempFile(req.file.filename);
       }
-      
       throw error;
     }
   }),
 
-  // Toggle publish status
+  // ✅ FRONTEND NEEDS: Toggle publish status for draft/publish buttons
   togglePublishStatus: asyncWrapper(async (req, res) => {
     const { id } = req.params;
     
@@ -234,7 +248,7 @@ const articleController = {
     
     res.status(200).json({
       success: true,
-      message: `Article ${article.is_published ? 'published' : 'unpublished'} successfully`,
+      message: `Article ${article.is_published ? 'published' : 'drafted'} successfully`,
       data: article
     });
   }),
@@ -273,6 +287,31 @@ const articleController = {
         hasNext: result.hasNext,
         hasPrev: result.hasPrev
       }
+    });
+  }),
+
+  // ✅ FRONTEND NEEDS: Get unique authors for filter dropdown
+  getUniqueAuthors: asyncWrapper(async (req, res) => {
+    const authors = await articleService.getUniqueAuthors();
+    
+    res.status(200).json({
+      success: true,
+      message: 'Authors retrieved successfully',
+      data: authors
+    });
+  }),
+
+  // ✅ FRONTEND NEEDS: Get related articles by category
+  getRelatedArticles: asyncWrapper(async (req, res) => {
+    const { id } = req.params;
+    const { limit = 5 } = req.query;
+    
+    const relatedArticles = await articleService.getRelatedArticles(id, parseInt(limit));
+    
+    res.status(200).json({
+      success: true,
+      message: 'Related articles retrieved successfully',
+      data: relatedArticles
     });
   })
 };
