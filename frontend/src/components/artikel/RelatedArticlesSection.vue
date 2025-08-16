@@ -30,15 +30,14 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['readMoreRelated']); // Event ini masih dipancarkan oleh card @click
+const emit = defineEmits(['readMoreRelated']);
 const router = useRouter(); 
 
 const goToArticleDetail = (id) => {
   router.push(`/artikel/${id}`);
-  window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll ke atas saat pindah artikel
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-// Fungsi format tanggal
 const formatDate = (dateString) => {
   if (!dateString) return '';
   const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -48,48 +47,50 @@ const formatDate = (dateString) => {
 
 <style scoped>
 .related-articles-section {
-  padding: 1.5rem; /* Padding internal konsisten */
+  padding: 1.5rem;
   background-color: white;
-  border-radius: 8px; /* Sudut frame */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Disesuaikan: Shadow lebih menonjol */
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .section-title {
   font-size: 1.2rem;
   color: #333;
-  margin-bottom: 1rem; /* Jarak ke list */
+  margin-bottom: 1rem;
   font-weight: 600;
   text-align: left;
-  padding-bottom: 0.5rem; /* Disesuaikan: Padding bawah untuk garis */
-  border-bottom: 1px solid #eee; /* Disesuaikan: Garis bawah */
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
 }
 
 .articles-list {
   display: grid;
-  grid-template-columns: 2fr; /* Satu kolom untuk sidebar */
-  gap: 1rem; /* Disesuaikan: Jarak antar kartu lebih jelas */
+  grid-template-columns: 2fr;
+  gap: 1rem;
 }
 
 .article-card {
-  background-color: #fcfcfc; /* Latar belakang kartu item lebih terang */
-  border-radius: 8px; /* Sudut membulat */
+  background-color: #fcfcfc;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* Disesuaikan: Shadow awal yang lebih jelas */
-  transition: box-shadow 0.2s ease, transform 0.2s ease; /* Transisi untuk hover */
+  border: 2px solid transparent;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  height: 100%; /* Memastikan tinggi konsisten */
+  height: 100%;
 }
 
 .article-card:hover {
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15); /* Disesuaikan: Shadow lebih kuat saat hover */
-  transform: translateY(-3px); /* Efek timbul yang lebih jelas */
+  border: 2px solid rgba(0, 0, 0, 0.25);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  transform: scale(1.02);
 }
 
 .article-image-container {
   width: 100%;
-  height: 120px; /* Tinggi gambar terkait */
+  height: 120px;
   overflow: hidden;
   background-color: #e0e0e0;
   border-top-left-radius: 8px;
@@ -107,57 +108,58 @@ const formatDate = (dateString) => {
   padding: 0.8rem;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem; /* Jarak antar elemen konten */
-  flex-grow: 1; /* Konten mengisi sisa ruang */
+  gap: 0.3rem;
+  flex-grow: 1;
 }
 
 .article-title {
-  font-size: 0.9rem; /* Ukuran judul terkait */
+  font-size: 0.9rem;
   color: #333;
   margin-bottom: 0.2rem;
-  font-weight: 600; /* Disesuaikan: Lebih tebal */
+  font-weight: 600;
   line-height: 1.3;
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 2; /* Batasi 2 baris */
+  -webkit-line-clamp: 2; 
   -webkit-box-orient: vertical;
   line-clamp: 2;
-  height: calc(0.9rem * 1.3 * 2); /* Tinggi eksplisit untuk 2 baris */
+  height: calc(0.9rem * 1.3 * 2); 
 }
 
 .article-description {
-  display: -webkit-box; /* Disesuaikan: Tampilkan deskripsi */
+  display: -webkit-box;
   font-size: 0.8rem;
   color: #777;
   margin-bottom: 0.6rem;
   line-height: 1.4;
-  -webkit-line-clamp: 2; /* Disesuaikan: Batasi 2 baris */
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  height: calc(0.8rem * 1.4 * 2); /* Tinggi eksplisit untuk 2 baris */
-  flex-grow: 1; /* Biarkan mengisi ruang */
+  height: calc(0.8rem * 1.4 * 2);
+  flex-grow: 1;
 }
 
-.article-meta-list { /* Container untuk tanggal */
+.article-meta-list {
   font-size: 0.75rem;
   color: #888;
   margin-top: 0.4rem;
-  margin-bottom: 0.4rem; /* Jarak bawah lebih kecil */
+  margin-bottom: 0.4rem;
 }
 
-.read-more-button { /* Styling untuk tombol Baca Selengkapnya */
-  background-color: #154484; /* Biru dongker */
+.read-more-button {
+  background-color: #154484;
   color: white;
-  padding: 0.4rem 0.8rem; /* Disesuaikan: Padding lebih kecil */
+  padding: 0.4rem 0.8rem; 
   border-radius: 4px;
-  font-size: 0.7rem; /* Disesuaikan: Ukuran font lebih kecil */
+  font-size: 0.7rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   width: 100%;
   text-align: center;
-  margin-top: auto; /* Dorong ke bawah */
+  margin-top: auto;
 }
 
 .read-more-button:hover {
@@ -198,11 +200,11 @@ const formatDate = (dateString) => {
   }
   .article-description {
     font-size: 0.75rem;
-    height: calc(0.75rem * 1.4 * 2); /* Disesuaikan: Tinggi eksplisit untuk 2 baris */
+    height: calc(0.75rem * 1.4 * 2);
     display: -webkit-box;
-    -webkit-line-clamp: 2; /* Batasi deskripsi menjadi 2 baris */
+    -webkit-line-clamp: 2; 
     -webkit-box-orient: vertical;
-    line-clamp: 2; /* Properti standar */
+    line-clamp: 2;
     overflow: hidden;
     text-overflow: ellipsis;
     flex-grow: 1;
@@ -230,7 +232,7 @@ const formatDate = (dateString) => {
   }
   .article-description {
     font-size: 0.65rem;
-    height: calc(0.65rem * 1.4 * 2); /* Disesuaikan: Tinggi eksplisit untuk 2 baris */
+    height: calc(0.65rem * 1.4 * 2);
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;

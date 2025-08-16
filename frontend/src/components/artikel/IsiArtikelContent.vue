@@ -98,38 +98,35 @@ watch(
 </script>
 
 <style scoped>
-.isi-artikel-content-container { /* Kontainer utama untuk semua konten di dalam content-wrapper */
+.isi-artikel-content-container {
   width: 100%;
   box-sizing: border-box;
-  /* Tidak ada background, shadow, border-radius di sini karena sudah di parent content-wrapper */
 }
 
-/* Tombol Kembali di level konten */
 .back-button-content {
-  background-color: #f0f2f5; /* Latar belakang mirip tombol kategori */
-  color: #555;
-  font-size: 0.rem; /* Ukuran font lebih kecil */
-  padding: 0.6rem 1rem; /* Padding seperti tombol */
-  border: 1px solid #d9d9d9; /* Border tipis */
-  border-radius: 20px; /* Lebih membulat seperti tombol */
+  background-color: #f9fafb;
+  color: #374151;
+  font-size: 0.9rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 9999px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  margin-bottom: 1rem; /* Disesuaikan: Jarak ke grid utama */
   display: inline-flex;
   align-items: center;
-  gap: 0.1rem;
-  text-decoration: none; /* Hapus underline */
+  gap: 0.4rem;
+  transition: all 0.2s ease;
 }
 
 .back-button-content:hover {
-  background-color: #e0e0e0;
-  color: #154484; /* Biru dongker saat hover */
+  background-color: #f3f4f6;
+  color: #154484;
   transform: translateY(-1px);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
+
 .back-button-content ion-icon {
-    font-size: 1rem; /* Ukuran icon */
-    margin-right: 0.1rem; /* Jarak icon dengan teks "Kembali" */
+    font-size: 1rem;
+    margin-right: 0.1rem;
 }
 
 .main-layout-grid {
@@ -139,16 +136,18 @@ watch(
   align-items: flex-start;
 }
 
+.main-article-column {
+  max-width: 820px;
+}
+
 .loading-state, .empty-state {
   text-align: center;
   padding: 3rem 1.5rem;
-  color: #888;
+  color: #6b7280;
   font-size: 1rem;
-  grid-column: 1 / -1;
-  background-color: #f8f8f8;
+  background-color: #f9fafb;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  margin-top: 0.5rem;
 }
 
 /* Responsive adjustments */
