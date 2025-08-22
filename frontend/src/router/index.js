@@ -67,9 +67,63 @@ import FormKelolaKategori from '@/components/Dashboard/dashboardArtikel/FormKelo
 import FormKelolaAuthor from '@/components/Dashboard/dashboardArtikel/FormKelolaAuthor.vue';
 import DaftarArtikelAdmin from '@/components/Dashboard/dashboardArtikel/DaftarArtikelAdmin.vue';
 import ArtikelAdminWrapper from '@/components/Dashboard/dashboardArtikel/ArtikelAdminWrapper.vue';
+import EditArtikel from '@/components/Dashboard/dashboardArtikel/EditArtikel.vue';
 
 import Error404 from '@/components/error404.vue';
 import Error403 from '@/components/error403.vue';
+
+
+const articleValidationCache = new Map();
+const CACHE_DURATION = 2 * 60 * 1000; 
+
+
+async function validateArticleSlug(slug) {
+  const API_BASE = 'http://localhost:3000';
+  
+  
+  const cached = articleValidationCache.get(slug);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.isValid;
+  }
+  
+  try {
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1500);
+    
+    const response = await fetch(`${API_BASE}/public/articles/${slug}`, {
+      signal: controller.signal,
+      headers: { 'Accept': 'application/json' }
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      articleValidationCache.set(slug, { isValid: false, timestamp: Date.now() });
+      return false;
+    }
+    
+    const data = await response.json();
+    const isValid = data.success && data.data && data.data.is_published !== false;
+    
+    articleValidationCache.set(slug, { isValid, timestamp: Date.now() });
+    return isValid;
+    
+  } catch (error) {
+    articleValidationCache.set(slug, { isValid: false, timestamp: Date.now() });
+    return false;
+  }
+}
+
+
+const isValidSlugFormat = (slug) => {
+  return slug && 
+         typeof slug === 'string' && 
+         slug.trim() !== '' && 
+         slug.length >= 3 && 
+         slug.length <= 100 &&   
+         /^[a-zA-Z0-9-_]+$/.test(slug.trim());
+};
 
 const routes = [
   { 
@@ -80,16 +134,6 @@ const routes = [
         path: '', 
         name: 'Beranda', 
         component: Home,
-      },
-      {
-        path: '/:pathMatch(.*)*',
-        name: 'NotFound',
-        component: Error404
-      },
-      {
-        path: '/error403',
-        name: 'Error403',
-        component: Error403
       },
       { 
         path: 'detailprogram/:id', 
@@ -108,35 +152,25 @@ const routes = [
           }
         ]
       },
-      { path: 'tentangkami', 
-        name: 'TentangKami', 
-        component: TentangKami 
-      },
-      { path: 'program', 
-        name: 'Program', 
-        component: Program 
-      },
-      { path: 'pendaftarantutor', 
-        name: 'Menjadi Tutor', 
-        component: PendaftaranTutor 
-      },
-      { path: 'absen', 
-        name: 'Absen', 
-        component: AbsenSiswa 
-      },
-      { path: 'rekap', 
-        name: 'Rekap', 
-        component: Rekap 
-      },
-      { path: 'artikel',
-        name: 'Artikel',
-        component: Artikel
-      },
+      { path: 'tentangkami', name: 'TentangKami', component: TentangKami },
+      { path: 'program', name: 'Program', component: Program },
+      { path: 'pendaftarantutor', name: 'Menjadi Tutor', component: PendaftaranTutor },
+      { path: 'absen', name: 'Absen', component: AbsenSiswa },
+      { path: 'rekap', name: 'Rekap', component: Rekap },
+      { path: 'artikel', name: 'Artikel', component: Artikel },
       {
-        path: 'artikel/:id',
+        path: 'artikel/:slug',
         name: 'isiArtikel', 
-        component: IsiArtikel
+        component: IsiArtikel,
+       
       },
+      { path: '/error403', name: 'Error403', component: Error403 },
+      
+      {
+        path: ':pathMatch(.*)*',
+        name: 'NotFound',
+        component: Error404
+      }
     ]
   },
  
@@ -347,9 +381,9 @@ const routes = [
         ]
       },
       {
-        path: 'artikel', // Path untuk menu Artikel di Dashboard Admin
+        path: 'artikel',
         name: 'ArtikelAdminWrapper',
-        component: ArtikelAdminWrapper,// Komponen wrapper untuk sub-menu
+        component: ArtikelAdminWrapper,
         children: [
           {
             path: 'tambah',
@@ -371,6 +405,12 @@ const routes = [
             name: 'DaftarArtikelAdmin',
             component: DaftarArtikelAdmin,
           },
+          {
+            path: 'edit/:id',
+            name: 'EditArtikelAdmin',
+            component: EditArtikel,
+            props: true
+          },
         ]
       },
     ]
@@ -383,9 +423,6 @@ const router = createRouter({
 })
 
 import { ref, onMounted } from 'vue'
-import path from 'path';
-import VerificationPage from '@/components/Dashboard/dashboardProgram/VerificationPage.vue';
-import FormTambahAuthor from '@/components/Dashboard/dashboardArtikel/FormKelolaAuthor.vue';
 
 const isTutor = ref(false)
 
@@ -403,41 +440,53 @@ onMounted(async () => {
   }
 })
 
-router.beforeEach(async (to, from, next) => {
-  const token = localStorage.getItem('token')
 
-  // Kalau tidak ada token, izinkan akses ke halaman publik
+router.beforeEach(async (to, from, next) => {
+  
+  const publicRoutes = ['Beranda', 'TentangKami', 'Program', 'Artikel', 'isiArtikel', 'NotFound', 'Error403'];
+  if (publicRoutes.includes(to.name)) {
+    return next();
+  }
+
+  const token = localStorage.getItem('token');
+  
   if (!token) {
-    return next()
+    return next();
+  }
+
+  if (!to.matched.some(record => record.meta.requiresAdmin)) {
+    return next();
   }
 
   try {
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1000);
+    
     const res = await fetch('/users/me', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
+      signal: controller.signal,
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    clearTimeout(timeoutId);
 
     if (!res.ok) {
-      throw new Error('Gagal ambil user info')
+      localStorage.removeItem('token');
+      return next({ name: 'Error403', replace: true });
     }
 
-    const data = await res.json()
-    const userRole = data.data?.role
+    const data = await res.json();
+    const userRole = data.data?.role;
 
-    // Cek jika route butuh admin tapi bukan admin
-    if (to.matched.some(record => record.meta.requiresAdmin) && userRole !== 'admin') {
-      return next({ name: 'Error403' })
+    if (userRole !== 'admin') {
+      return next({ name: 'Error403', replace: true });
     }
 
-    // lanjut ke route yang diminta
-    next()
+    next();
   } catch (error) {
-    console.error('Gagal validasi role:', error)
-    // Redirect ke error403 jika gagal ambil data user
-    return next({ name: 'Error403' })
+    localStorage.removeItem('token');
+    return next({ name: 'Error403', replace: true });
   }
-})
-
+});
 
 export default router

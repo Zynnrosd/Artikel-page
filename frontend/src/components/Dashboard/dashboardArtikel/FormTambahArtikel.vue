@@ -5,6 +5,7 @@
       <p class="form-subtitle">Bagikan cerita dan pengetahuan Anda dengan dunia</p>
     </div>
 
+    <!-- Success Message -->
     <Transition name="slide-down">
       <div v-if="successMessage" class="alert alert-success">
         <div class="alert-content">
@@ -13,9 +14,16 @@
           </svg>
           {{ successMessage }}
         </div>
+        <button type="button" @click="clearSuccessMessage" class="alert-close-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
     </Transition>
 
+    <!-- Error Message -->
     <Transition name="slide-down">
       <div v-if="errorMessage" class="alert alert-error">
         <div class="alert-content">
@@ -26,6 +34,12 @@
           </svg>
           {{ errorMessage }}
         </div>
+        <button type="button" @click="clearErrorMessage" class="alert-close-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
     </Transition>
 
@@ -57,24 +71,25 @@
             <select id="author" v-model="form.author" class="form-select" required>
               <option value="" disabled>Pilih Penulis</option>
               <option v-for="author in authors" :key="author.id" :value="author.name">
-              {{ author.name }}
+                {{ author.name }}
               </option>
             </select>
           </div>
         </div>
 
         <div class="form-group">
-          <label for="category" class="form-label">
-            <span class="label-text">Kategori</span>
-            <span class="label-required">*</span>
-          </label>
-          <div class="select-wrapper">
-            <select id="category" v-model="form.category" class="form-select" required>
-              <option value="" disabled>Pilih Kategori</option>
-              <option v-for="cat in categories" :key="cat.id" :value="cat.name">{{ cat.name }}</option>
-            </select>
-          </div>
-        </div>
+  <label for="category" class="form-label">
+    <span class="label-text">Kategori</span>
+    <span class="label-required">*</span>
+  </label>
+  <div class="select-wrapper">
+    <select id="category" v-model="form.category" class="form-select" required>
+      <option value="" disabled>Pilih Kategori</option>
+      <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+    </select>
+  </div>
+  </div>
+
 
         <div class="form-group full-width">
           <label for="image" class="form-label">
@@ -164,39 +179,78 @@ const form = ref({
   imageFile: null,
 });
 
-const authors = ref([
-  { id: 1, name: 'Farhan' },
-  { id: 2, name: 'Nasrullah' },
-  { id: 3, name: 'Rafie' },
-]);
-
-const categories = ref([
-  { id: 1, name: 'Tutorial' },
-  { id: 2, name: 'Informasi' },
-  { id: 3, name: 'Tips & Trik' }
-]);
+const authors = ref([]);
+const categories = ref([]);
 
 const imagePreview = ref(null);
 const loading = ref(false);
 
 const successMessage = ref('');
 const errorMessage = ref('');
-onMounted(() => {
+
+// API URL
+const API_BASE = 'http://localhost:3000';
+
+
+const clearSuccessMessage = () => {
   successMessage.value = '';
+};
+
+const clearErrorMessage = () => {
   errorMessage.value = '';
+};
+
+// Fetch Authors and Categories from backend
+const fetchAuthorsAndCategories = async () => {
+  try {
+    const authorsResponse = await axios.get(`${API_BASE}/admin/authors`, {
+      headers: getAuthHeaders()
+    });
+    if (authorsResponse.data.success) {
+      authors.value = authorsResponse.data.data;
+    }
+
+    const categoriesResponse = await axios.get(`${API_BASE}/admin/categories`, {
+      headers: getAuthHeaders()
+    });
+    if (categoriesResponse.data.success) {
+      categories.value = categoriesResponse.data.data;
+    }
+  } catch (error) {
+    console.error('Error fetching authors or categories:', error);
+    errorMessage.value = 'Gagal memuat data penulis atau kategori.';
+  }
+};
+
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+};
+
+onMounted(() => {
+  fetchAuthorsAndCategories();
 });
+
 
 const handleImageFileChange = (event) => {
   const file = event.target.files[0];
   if (file) {
     if (file.size > 1 * 1024 * 1024) {
-  errorMessage.value = 'Ukuran file gambar tidak boleh lebih dari 1MB.';
-  return;
-}
-  const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
-  if (!validTypes.includes(file.type)) {    errorMessage.value = 'Format gambar harus PNG, JPG, atau JPEG.';
-  return;
-}
+      errorMessage.value = 'Ukuran file gambar tidak boleh lebih dari 1MB.';
+      // Reset file input
+      event.target.value = '';
+      return;
+    }
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+    if (!validTypes.includes(file.type)) {
+      errorMessage.value = 'Format gambar harus PNG, JPG, atau JPEG.';
+      // Reset file input
+      event.target.value = '';
+      return;
+    }
+    
+    // Clear error message only when file is valid
+    errorMessage.value = '';
     
     form.value.imageFile = file;
     const reader = new FileReader();
@@ -207,45 +261,49 @@ const handleImageFileChange = (event) => {
   } else {
     form.value.imageFile = null;
     imagePreview.value = null;
+    // Clear error message when no file is selected
+    errorMessage.value = '';
   }
-  errorMessage.value = '';
 };
 
+// Remove Image
 const removeImage = () => {
   form.value.imageFile = null;
   imagePreview.value = null;
   document.getElementById('image').value = '';
 };
 
+// Submit Handler
 const handleSubmit = async () => {
   loading.value = true;
   successMessage.value = '';
   errorMessage.value = '';
 
+  // Validasi form
   if (!form.value.title.trim()) {
     errorMessage.value = 'Judul artikel tidak boleh kosong.';
     loading.value = false;
     return;
   }
-  
+
   if (!form.value.author.trim()) {
     errorMessage.value = 'Nama penulis tidak boleh kosong.';
     loading.value = false;
     return;
   }
-  
+
   if (!form.value.category) {
     errorMessage.value = 'Silakan pilih kategori artikel.';
     loading.value = false;
     return;
   }
-  
+
   if (!form.value.content.trim()) {
     errorMessage.value = 'Isi artikel tidak boleh kosong.';
     loading.value = false;
     return;
   }
-  
+
   if (!form.value.imageFile) {
     errorMessage.value = 'Gambar utama wajib diupload.';
     loading.value = false;
@@ -259,40 +317,34 @@ const handleSubmit = async () => {
   formData.append('content', form.value.content.trim());
   formData.append('mainImage', form.value.imageFile);
 
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token'); 
 
   try {
-    const response = await axios.post('/api/articles', formData, {
+    const response = await axios.post(`${API_BASE}/admin/articles`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
-        ...(token && { 'Authorization': `Bearer ${token}` })
-      },
+        ...(token && { 'Authorization': `Bearer ${token}` }) 
+      }
     });
 
     successMessage.value = 'Artikel berhasil dipublikasikan! 🎉';
     console.log('Artikel berhasil ditambahkan:', response.data);
-    
-    form.value = {
-      title: '',
-      author: '',
-      category: '',
-      content: '',
-      imageFile: null,
-    };
+
+    form.value = { title: '', author: '', category: '', content: '', imageFile: null };
     imagePreview.value = null;
-    document.getElementById('image').value = '';
-    
+
     setTimeout(() => {
-      router.push('/dashboard/articles');
+      router.push('/dashboard/articles'); 
     }, 2000);
-    
+
   } catch (error) {
     console.error('Gagal menambahkan artikel:', error);
-    errorMessage.value = error.response?.data?.message || 'Terjadi kesalahan saat menyimpan artikel. Silakan coba lagi.';
+    errorMessage.value = error.response?.data?.message || 'Terjadi kesalahan saat menyimpan artikel.';
   } finally {
     loading.value = false;
   }
 };
+
 
 const goBack = () => {
   router.go(-1);
@@ -338,7 +390,6 @@ const goBack = () => {
   flex-direction: column;
 }
 
-
 .form-header {
   text-align: center;
   margin-bottom: 2rem;
@@ -365,11 +416,38 @@ const goBack = () => {
   font-weight: 500;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.75rem;
+  position: relative;
+}
+
+.alert-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
 }
 
 .alert-icon {
   flex-shrink: 0;
+}
+
+.alert-close-btn {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.alert-close-btn:hover {
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 .alert-success {
@@ -378,10 +456,18 @@ const goBack = () => {
   color: #22543D;
 }
 
+.alert-success .alert-close-btn:hover {
+  background-color: rgba(34, 84, 61, 0.1);
+}
+
 .alert-error {
   background-color: #FED7D7;
   border-color: #F56565;
   color: #742A2A;
+}
+
+.alert-error .alert-close-btn:hover {
+  background-color: rgba(116, 42, 42, 0.1);
 }
 
 .artikel-form {

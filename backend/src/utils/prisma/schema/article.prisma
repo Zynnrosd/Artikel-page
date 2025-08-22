@@ -1,21 +1,21 @@
 model Article {
-  id            String   @id @default(uuid()) // Changed from uuid(7) to uuid()
-  title         String   @db.VarChar(255)
-  slug          String   @db.VarChar(255) // Removed @unique since not in migration
-  content       String   @db.Text
-  featuredImage String?  @map("featured_image") @db.VarChar(255)
-  authorId      String   @map("author_id")
-  categoryId    String   @map("category_id")
-  customAuthor  String  @map("custom_author") @db.VarChar(255)
-  publishedAt   DateTime? @map("published_at") @db.Timestamp()
-  deletedAt     DateTime? @map("deleted_at") @db.Timestamp()
+    id            String    @id @default(uuid())
+    title         String    @db.VarChar(255)
+    slug          String    @db.VarChar(255)
+    content       String    @db.Text
+    featuredImage String?   @map("featured_image") @db.VarChar(255)
+    authorId      String    @map("author_id")
+    categoryId    String    @map("category_id")
+    customAuthor  String    @map("custom_author") @db.VarChar(255)
+    publishedAt   DateTime? @map("published_at") @db.Timestamp()
+    deletedAt     DateTime? @map("deleted_at") @db.Timestamp()
 
-  // Relations
-  category   Category @relation(fields: [categoryId], references: [idKategori], onDelete: Restrict)
-  author     User     @relation(fields: [authorId], references: [id], onDelete: Restrict)
+    // Relations
+    category Category @relation(fields: [categoryId], references: [idKategori], onDelete: Restrict)
+    author   Author   @relation(fields: [authorId], references: [id], onDelete: Restrict) // Changed from User to Author
 
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp()
+    createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp()
 
-  @@map("articles")
+    @@map("articles")
 }

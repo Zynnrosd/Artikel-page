@@ -3,81 +3,158 @@ import { HttpError } from '../utils/error.js';
 import categoryService from '../services/category.js';
 
 const categoryController = {
-  // ✅ FRONTEND NEEDS: Get all categories for dropdown and tabs
   getAllCategories: asyncWrapper(async (req, res) => {
-    // ✅ FIX: Handle different response formats based on route
     const { page, limit, search } = req.query;
-    
+
     if (req.path.includes('/public/')) {
-      // For public routes, use simplified dropdown format
-      const categoriesData = await categoryService.getCategoriesForDropdown();
-      
-      res.status(200).json({
-        success: true,
-        message: 'Categories retrieved successfully',
-        data: categoriesData
-      });
+      try {
+        const categoriesData = await categoryService.getCategoriesForDropdown();
+        const formattedCategories = categoriesData
+          .filter(category => category.label && category.label.trim() !== '')
+          .map(category => ({
+            id: category.id,
+            name: category.label || category.key || 'Unknown Category'
+          }));
+
+        res.status(200).json({
+          success: true,
+          message: 'Categories retrieved successfully',
+          data: formattedCategories
+        });
+      } catch {
+        res.status(200).json({
+          success: true,
+          message: 'Categories retrieved successfully (fallback)',
+          data: [{ id: null, name: 'Semua Artikel' }]
+        });
+      }
     } else {
-      // For admin routes, use paginated format
       const options = {
         page: parseInt(page) || 1,
         limit: parseInt(limit) || 10,
         search
       };
-      
-      const result = await categoryService.getAllCategories(options);
-      
-      // ✅ FIX: Access the categories array from result
-      const formattedCategories = result.categories.map(category => ({
-        id: category.id,
-        name: category.nama_kategori || category.name
-      }));
-      
-      res.status(200).json({
-        success: true,
-        message: 'Categories retrieved successfully',
-        data: formattedCategories,
-        pagination: {
-          currentPage: result.currentPage,
-          totalPages: result.totalPages,
-          totalItems: result.totalItems,
-          hasNext: result.hasNext,
-          hasPrev: result.hasPrev
-        }
-      });
+
+      try {
+        const result = await categoryService.getAllCategories(options);
+        const categoriesArray = result.categories || result.data || result || [];
+        const formattedCategories = categoriesArray
+          .filter(category =>
+            category.name &&
+            category.name.trim() !== '' &&
+            category.name !== 'Unnamed Category' &&
+            category.name !== 'Unknown Category'
+          )
+          .map(category => ({
+            id: category.id,
+            name: category.name || 'Unknown Category'
+          }));
+
+        res.status(200).json({
+          success: true,
+          message: 'Categories retrieved successfully',
+          data: formattedCategories,
+          pagination: {
+            currentPage: result.currentPage || 1,
+            totalPages: result.totalPages || 1,
+            totalItems: result.totalItems || formattedCategories.length,
+            hasNext: result.hasNext || false,
+            hasPrev: result.hasPrev || false
+          }
+        });
+      } catch {
+        res.status(200).json({
+          success: true,
+          message: 'Categories retrieved successfully (fallback)',
+          data: [],
+          pagination: {
+            currentPage: 1,
+            totalPages: 1,
+            totalItems: 0,
+            hasNext: false,
+            hasPrev: false
+          }
+        });
+      }
     }
   }),
 
-  // ✅ FRONTEND NEEDS: Get categories with article count for display
   getCategoriesWithCount: asyncWrapper(async (req, res) => {
-    const categories = await categoryService.getCategoriesWithArticleCount();
-    
-    // ✅ FIX: This method returns array directly
-    const formattedCategories = categories.map(category => ({
-      id: category.id,
-      name: category.nama_kategori || category.name,
-      articleCount: category.published_articles || 0
-    }));
-    
-    res.status(200).json({
-      success: true,
-      message: 'Categories with count retrieved successfully',
-      data: formattedCategories
-    });
+    try {
+      const categories = await categoryService.getCategoriesWithArticleCount();
+      let categoriesArray = [];
+
+      if (Array.isArray(categories)) {
+        categoriesArray = categories;
+      } else if (categories.data && Array.isArray(categories.data)) {
+        categoriesArray = categories.data;
+      } else if (categories.categories && Array.isArray(categories.categories)) {
+        categoriesArray = categories.categories;
+      }
+
+      const formattedCategories = categoriesArray
+        .filter(category =>
+          category.name &&
+          category.name.trim() !== '' &&
+          category.name !== 'Unnamed Category' &&
+          category.name !== 'Unknown Category'
+        )
+        .map(category => ({
+          id: category.id,
+          name: category.name,
+          article_count: category.published_articles || category.articleCount || category.article_count || 0
+        }));
+
+      res.status(200).json({
+        success: true,
+        message: 'Categories with count retrieved successfully',
+        data: formattedCategories
+      });
+    } catch {
+      try {
+        const basicCategories = await categoryService.getCategoriesForDropdown();
+        const fallbackCategories = basicCategories
+          .filter(category =>
+            category.label &&
+            category.label.trim() !== '' &&
+            category.key !== 'Semua Artikel'
+          )
+          .map(category => ({
+            id: category.id,
+            name: category.label,
+            article_count: 0
+          }));
+
+        res.status(200).json({
+          success: true,
+          message: 'Categories retrieved successfully (fallback)',
+          data: fallbackCategories
+        });
+      } catch {
+        res.status(200).json({
+          success: true,
+          message: 'Categories retrieved successfully (empty fallback)',
+          data: []
+        });
+      }
+    }
   }),
 
   getCategoryById: asyncWrapper(async (req, res) => {
     const { id } = req.params;
     const category = await categoryService.getCategoryById(id);
-    
+
     if (!category) {
       throw new HttpError('Category not found', 404);
     }
 
-    // ✅ FRONTEND FORMAT: Consistent format
+    if (!category.name || category.name.trim() === '') {
+      throw new HttpError('Category has invalid data', 400);
+    }
+
     const formattedCategory = {
       id: category.id,
-      name: category.nama_kategori || category.name
+      name: category.name
     };
 
     res.status(200).json({
@@ -88,12 +165,8 @@ const categoryController = {
   }),
 
   createCategory: asyncWrapper(async (req, res) => {
-    console.log('=== CREATE CATEGORY DEBUG ===');
-    console.log('req.body:', req.body);
-    
     let categoryName;
-    
-    // ✅ FRONTEND COMPATIBILITY: Accept both 'name' and 'nama_kategori'
+
     if (req.body.name) {
       categoryName = req.body.name.trim();
     } else if (req.body.nama_kategori) {
@@ -101,47 +174,49 @@ const categoryController = {
     } else {
       throw new HttpError('Nama kategori tidak boleh kosong', 400);
     }
-    
-    if (!categoryName) {
-      throw new HttpError('Nama kategori tidak boleh kosong', 400);
-    }
 
-    // ✅ VALIDATION: Check duplicate name
-    const existingCategory = await categoryService.getCategoryById(categoryName);
-    if (existingCategory) {
-      throw new HttpError('Kategori sudah ada', 400);
+    if (!categoryName || categoryName === '') {
+      throw new HttpError('Nama kategori tidak boleh kosong atau hanya berisi spasi', 400);
     }
 
     const categoryData = {
       nama_kategori: categoryName,
-      author_id: res.locals.user?.id // Add author_id if available
+      author_id: res.locals.user?.id
     };
 
-    const category = await categoryService.createCategory(categoryData);
-    
-    // ✅ FRONTEND FORMAT: Return in expected format
-    const formattedCategory = {
-      id: category.id,
-      name: category.nama_kategori || category.name
-    };
-    
-    res.status(201).json({
-      success: true,
-      message: 'Kategori berhasil ditambahkan',
-      data: formattedCategory
-    });
+    try {
+      const category = await categoryService.createCategory(categoryData);
+
+      if (!category || !category.id) {
+        throw new HttpError('Gagal membuat kategori - data tidak valid', 500);
+      }
+
+      if (!category.name || category.name.trim() === '') {
+        throw new HttpError('Gagal membuat kategori - nama kategori tidak valid', 500);
+      }
+
+      const formattedCategory = {
+        id: category.id,
+        name: category.name
+      };
+
+      res.status(201).json({
+        success: true,
+        message: 'Kategori berhasil ditambahkan',
+        data: formattedCategory
+      });
+    } catch (error) {
+      if (error.statusCode === 400) {
+        throw new HttpError(error.message || 'Gagal membuat kategori', 400);
+      }
+      throw new HttpError('Gagal membuat kategori', 500);
+    }
   }),
 
   updateCategory: asyncWrapper(async (req, res) => {
     const { id } = req.params;
-    
-    console.log('=== UPDATE CATEGORY DEBUG ===');
-    console.log('req.body:', req.body);
-    console.log('category id:', id);
-    
     let categoryName;
-    
-    // ✅ FRONTEND COMPATIBILITY: Accept both 'name' and 'nama_kategori'
+
     if (req.body.name) {
       categoryName = req.body.name.trim();
     } else if (req.body.nama_kategori) {
@@ -150,64 +225,87 @@ const categoryController = {
       throw new HttpError('Nama kategori tidak boleh kosong', 400);
     }
 
-    if (!categoryName) {
-      throw new HttpError('Nama kategori tidak boleh kosong', 400);
+    if (!categoryName || categoryName === '') {
+      throw new HttpError('Nama kategori tidak boleh kosong atau hanya berisi spasi', 400);
     }
 
-    // ✅ VALIDATION: Check duplicate name (exclude current category)
-    const existingCategory = await categoryService.getCategoryById(categoryName);
-    if (existingCategory && existingCategory.id !== id) {
-      throw new HttpError('Kategori sudah ada', 400);
+    const updateData = { nama_kategori: categoryName };
+
+    try {
+      const updatedCategory = await categoryService.updateCategory(id, updateData);
+
+      if (!updatedCategory || !updatedCategory.name || updatedCategory.name.trim() === '') {
+        throw new HttpError('Gagal memperbarui kategori - data tidak valid', 500);
+      }
+
+      const formattedCategory = {
+        id: updatedCategory.id,
+        name: updatedCategory.name
+      };
+
+      res.status(200).json({
+        success: true,
+        message: 'Kategori berhasil diperbarui',
+        data: formattedCategory
+      });
+    } catch (error) {
+      if (error.statusCode === 404) {
+        throw new HttpError('Kategori tidak ditemukan', 404);
+      } else if (error.statusCode === 400) {
+        throw new HttpError(error.message || 'Kategori sudah ada', 400);
+      }
+      throw new HttpError('Gagal memperbarui kategori', 500);
     }
-
-    const updateData = {
-      nama_kategori: categoryName
-    };
-
-    const updatedCategory = await categoryService.updateCategory(id, updateData);
-    
-    // ✅ FRONTEND FORMAT: Return in expected format
-    const formattedCategory = {
-      id: updatedCategory.id,
-      name: updatedCategory.nama_kategori || updatedCategory.name
-    };
-    
-    res.status(200).json({
-      success: true,
-      message: 'Kategori berhasil diperbarui',
-      data: formattedCategory
-    });
   }),
 
   deleteCategory: asyncWrapper(async (req, res) => {
     const { id } = req.params;
 
-    console.log('=== DELETE CATEGORY DEBUG ===');
-    console.log('category id:', id);
+    try {
+      const result = await categoryService.deleteCategory(id);
 
-    // ✅ CHECK: If category has published articles
-    const articlesQuery = `
-      SELECT COUNT(*) as count 
-      FROM articles 
-      WHERE category_id = ? AND published_at IS NOT NULL
-    `;
-    
-    const result = await prisma.$queryRawUnsafe(articlesQuery, id);
-    const articlesCount = Number(result[0].count);
-    
-    if (articlesCount > 0) {
-      throw new HttpError(
-        `Cannot delete category. There are ${articlesCount} published article(s) using this category`,
-        400
-      );
+      return res.status(200).json({
+        success: true,
+        message: result.message || 'Kategori berhasil dihapus',
+        refreshRequired: true,
+        refreshType: 'articles',
+        deletedCategoryId: id
+      });
+    } catch (error) {
+      let statusCode = 500;
+      let errorMessage = 'Terjadi kesalahan saat menghapus kategori';
+
+      if (error && error.statusCode !== undefined) {
+        const rawStatusCode = error.statusCode;
+        if (typeof rawStatusCode === 'string') {
+          const parsed = parseInt(rawStatusCode);
+          if (!isNaN(parsed) && parsed >= 100 && parsed <= 599) {
+            statusCode = parsed;
+          }
+        } else if (typeof rawStatusCode === 'number' && rawStatusCode >= 100 && rawStatusCode <= 599) {
+          statusCode = rawStatusCode;
+        }
+      }
+
+      if (error && error.message && typeof error.message === 'string') {
+        errorMessage = error.message;
+      }
+
+      if (error.code === 'P2003' || (error.message && error.message.includes('foreign key constraint'))) {
+        statusCode = 400;
+        errorMessage = 'Tidak dapat menghapus kategori yang masih memiliki artikel terkait.';
+      }
+
+      if (typeof statusCode !== 'number' || statusCode < 100 || statusCode > 599) {
+        statusCode = 500;
+        errorMessage = 'Terjadi kesalahan server';
+      }
+
+      return res.status(statusCode).json({
+        success: false,
+        message: errorMessage
+      });
     }
-
-    await categoryService.deleteCategory(id);
-    
-    res.status(200).json({
-      success: true,
-      message: 'Kategori berhasil dihapus'
-    });
   })
 };
 

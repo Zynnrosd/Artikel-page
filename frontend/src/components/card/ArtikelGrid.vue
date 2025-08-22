@@ -16,10 +16,10 @@
             Oleh: {{ article.author }}
           </span>
 
-            <span class="article-time-list">🕒 {{ formatUploadTime(article.createdAt) }}
-            </span>
+          <span class="article-time-list">🕒 {{ formatUploadTime(article.createdAt) }}
+          </span>
         </div>
-        <button class="read-more-button" @click="$emit('readMore', article.id)">
+        <button class="read-more-button" @click="handleReadMore(article)">
           Baca Selengkapnya
         </button>
       </div>
@@ -43,7 +43,32 @@ const props = defineProps({
 
 const emit = defineEmits(['readMore', 'filterAuthor']);
 
-// Fungsi untuk format waktu unggah
+const handleReadMore = (article) => {
+  console.log('=== ARTIKEL GRID READ MORE ===');
+  console.log('Article data:', {
+    id: article.id,
+    slug: article.slug,
+    title: article.title
+  });
+  
+  if (article.slug) {
+    console.log('✅ Using slug for navigation:', article.slug);
+    emit('readMore', article.slug);
+  } 
+  else if (article.navigationSlug) {
+    console.log('✅ Using navigationSlug for navigation:', article.navigationSlug);
+    emit('readMore', article.navigationSlug);
+  }
+  else if (article.id) {
+    console.warn('⚠️ No slug found, using ID as fallback:', article.id);
+    emit('readMore', article.id);
+  }
+  else {
+    console.error('❌ No valid identifier found for article:', article);
+    alert('Error: Artikel tidak dapat dibuka');
+  }
+};
+
 const formatUploadTime = (dateString) => {
   if (!dateString) return '';
   const date = new Date(dateString);
@@ -80,7 +105,6 @@ const formatUploadTime = (dateString) => {
   margin: 0 auto;
   place-items: stretch;
   transition: all 0.3s ease-in-out;
-
 }
 
 .article-card {
@@ -236,7 +260,6 @@ const formatUploadTime = (dateString) => {
   grid-column: 1 / -1;
 }
 
-/* Responsive */
 @media (max-width: 1200px) {
   .articles-grid {
     grid-template-columns: repeat(3, 1fr);
@@ -262,7 +285,5 @@ const formatUploadTime = (dateString) => {
     padding: 0.6rem 1rem;
     font-size: 0.7rem;
   }
-
 }
-
 </style>

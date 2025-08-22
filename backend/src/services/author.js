@@ -1,384 +1,313 @@
+// services/author.js
 import { prisma } from '../utils/db.js';
 import { HttpError } from '../utils/error.js';
 import { randomUUID } from 'crypto';
 
 const authorService = {
-  // ✅ HELPER: Transform database row to frontend format
   transformAuthorForFrontend(author) {
     if (!author) return null;
-    
     return {
       id: author.id,
-      name: author.name,
-      email: author.email,
-      role: author.role,
+      name: author.name || 'Unknown Author',
+      label: author.name || 'Unknown Author',
+      key: author.name || 'Unknown Author',
+      createdBy: author.created_by,
       createdAt: author.created_at,
       updatedAt: author.updated_at,
-      editing: false // For frontend inline editing
+      editing: false,
+      author_id: author.id,
+      author_name: author.name,
+      created_by: author.created_by,
+      author_display: author.name || 'Unknown Author'
     };
   },
 
-  // Get all authors - support both system users and custom authors
   async getAllAuthors(options = {}) {
-    const { includeCustomAuthors = false } = options;
-    
-    if (includeCustomAuthors) {
-      // Get both system authors and unique custom authors from articles
-      const systemAuthorsQuery = `
-        SELECT DISTINCT
-          u.id,
-          u.name,
-          u.email,
-          u.role,
-          u.created_at,
-          u.updated_at,
-          'system' as author_type
-        FROM users u
-        WHERE u.role = 'author'
-        ORDER BY u.name ASC
-      `;
+    const { page = 1, limit = 50, search, includeArticleCount = false } = options;
+    const offset = (page - 1) * limit;
 
-      const customAuthorsQuery = `
-        SELECT DISTINCT
-          NULL as id,
-          a.custom_author as name,
-          NULL as email,
-          'custom' as role,
-          MIN(a.created_at) as created_at,
-          MAX(a.updated_at) as updated_at,
-          'custom' as author_type
-        FROM articles a
-        WHERE a.custom_author IS NOT NULL
-        GROUP BY a.custom_author
-        ORDER BY a.custom_author ASC
-      `;
-
-      const [systemAuthors, customAuthors] = await Promise.all([
-        prisma.$queryRawUnsafe(systemAuthorsQuery),
-        prisma.$queryRawUnsafe(customAuthorsQuery)
-      ]);
-
-      // Combine and transform results
-      const allAuthors = [
-        ...systemAuthors.map(author => this.transformAuthorForFrontend(author)),
-        ...customAuthors.map(author => ({
-          id: `custom_${author.name}`, // Unique ID for custom authors
-          name: author.name,
-          email: null,
-          role: 'custom',
-          createdAt: author.created_at,
-          updatedAt: author.updated_at,
-          editing: false,
-          author_type: 'custom'
-        }))
-      ];
-
-      return allAuthors.sort((a, b) => a.name.localeCompare(b.name));
-    } else {
-      // Get only system authors (existing functionality)
-      const authors = await prisma.users.findMany({
-        where: {
-          role: 'author',
-        },
-        orderBy: {
-          name: 'asc'
-        }
-      });
-      
-      return authors.map(author => this.transformAuthorForFrontend(author));
+    let whereConditions = ['a.deleted_at IS NULL'];
+    let queryParams = [];
+    if (search) {
+      whereConditions.push(`a.name LIKE ?`);
+      queryParams.push(`%${search}%`);
     }
-  },
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
 
-  // ✅ NEW: Get authors for frontend dropdown (combines system + custom)
-  async getAuthorsForDropdown() {
-    // Get unique custom authors from articles
-    const customAuthorsQuery = `
-      SELECT DISTINCT a.custom_author as name
-      FROM articles a
-      WHERE a.custom_author IS NOT NULL
-        AND a.published_at IS NOT NULL
-      ORDER BY a.custom_author ASC
-    `;
+    const countQuery = `SELECT COUNT(*) as total FROM authors a ${whereClause}`;
+    const countResult = await prisma.$queryRawUnsafe(countQuery, ...queryParams);
+    const totalItems = Number(countResult[0].total);
+    const totalPages = Math.ceil(totalItems / limit);
 
-    const customAuthors = await prisma.$queryRawUnsafe(customAuthorsQuery);
-    
-    // Return just the names for frontend compatibility
-    return customAuthors.map(author => author.name);
-  },
+    let authorsQuery;
+    if (includeArticleCount) {
+      authorsQuery = `
+        SELECT a.id, a.name, a.created_at, a.updated_at, a.created_by,
+          COALESCE(u.name, 'System') as creator_name,
+          COALESCE(u.email, '') as creator_email,
+          COUNT(ar.id) as total_articles,
+          COUNT(CASE WHEN ar.published_at IS NOT NULL THEN 1 END) as published_articles
+        FROM authors a
+        LEFT JOIN users u ON a.created_by = u.id
+        LEFT JOIN articles ar ON a.id = ar.author_id AND ar.deleted_at IS NULL
+        ${whereClause}
+        GROUP BY a.id, a.name, a.created_at, a.updated_at, a.created_by, u.name, u.email
+        ORDER BY a.created_at DESC
+        LIMIT ? OFFSET ?
+      `;
+    } else {
+      authorsQuery = `
+        SELECT a.id, a.name, a.created_at, a.updated_at, a.created_by,
+          COALESCE(u.name, 'System') as creator_name,
+          COALESCE(u.email, '') as creator_email
+        FROM authors a
+        LEFT JOIN users u ON a.created_by = u.id
+        ${whereClause}
+        ORDER BY a.name ASC
+        LIMIT ? OFFSET ?
+      `;
+    }
 
-  // ✅ NEW: Get system authors for admin forms (for selecting author_id)
-  async getSystemAuthorsForDropdown() {
-    const authors = await prisma.users.findMany({
-      where: {
-        role: 'author',
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true
-      },
-      orderBy: {
-        name: 'asc'
+    queryParams.push(limit, offset);
+    const authors = await prisma.$queryRawUnsafe(authorsQuery, ...queryParams);
+
+    const transformedAuthors = authors.map(author => {
+      const transformed = this.transformAuthorForFrontend(author);
+      if (includeArticleCount) {
+        transformed.total_articles = Number(author.total_articles) || 0;
+        transformed.published_articles = Number(author.published_articles) || 0;
       }
+      return transformed;
     });
-    
-    return authors.map(author => ({
+
+    return {
+      authors: transformedAuthors,
+      currentPage: page,
+      totalPages,
+      totalItems,
+      hasNext: page < totalPages,
+      hasPrev: page > 1
+    };
+  },
+
+  async getAuthorsForDropdown() {
+    const query = `
+      SELECT a.id, a.name
+      FROM authors a
+      WHERE a.deleted_at IS NULL
+        AND a.name IS NOT NULL 
+        AND TRIM(a.name) != ''
+      ORDER BY a.name ASC
+    `;
+    const authors = await prisma.$queryRawUnsafe(query);
+    const validAuthors = authors.filter(a => a.name && a.name.trim() !== '');
+    return validAuthors.map(author => ({
+      label: author.name.trim(),
+      key: author.name.trim(),
       id: author.id,
-      name: author.name,
-      email: author.email
+      name: author.name.trim()
     }));
   },
 
-  // Get single author by ID
-  async getAuthorById(id) {
-    const author = await prisma.users.findUnique({
-      where: {
-        id: id,
-      },
-    });
+  async getAuthorById(identifier) {
+    let query, param;
+    const isUUID = typeof identifier === 'string' &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(identifier);
 
-    if (!author) {
-      return null;
-    }
-
-    return this.transformAuthorForFrontend(author);
-  },
-
-  // Create a new system author
-  async createAuthor(authorData) {
-    const { name, email } = authorData;
-
-    // Validate required fields
-    if (!name || name.trim() === '') {
-      throw new HttpError(400, {
-        message: 'Author name is required',
-        errors: null
-      });
-    }
-
-    // Check if author name already exists
-    const existingAuthor = await prisma.users.findFirst({
-      where: {
-        name: name.trim(),
-        role: 'author'
-      },
-    });
-
-    if (existingAuthor) {
-      throw new HttpError(400, {
-        message: 'Author with this name already exists',
-        errors: null
-      });
-    }
-
-    // Check if email already exists (if provided)
-    if (email && email.trim() !== '') {
-      const existingEmail = await prisma.users.findUnique({
-        where: {
-          email: email.trim(),
-        },
-      });
-
-      if (existingEmail) {
-        throw new HttpError(400, {
-          message: 'Email already exists',
-          errors: null
-        });
-      }
-    }
-
-    // Generate UUID for author ID
-    const authorId = randomUUID();
-
-    const newAuthor = await prisma.users.create({
-      data: {
-        id: authorId,
-        name: name.trim(),
-        email: email?.trim() || null,
-        role: 'author',
-      },
-    });
-
-    return this.transformAuthorForFrontend(newAuthor);
-  },
-
-  // Update an existing system author
-  async updateAuthor(id, updateData) {
-    const { name, email } = updateData;
-
-    // Check if author exists
-    const author = await prisma.users.findUnique({
-      where: {
-        id,
-      },
-    });
-
-    if (!author) {
-      throw new HttpError(404, {
-        message: 'Author not found',
-        errors: null
-      });
-    }
-
-    // Validate name if provided
-    if (name !== undefined) {
-      if (!name || name.trim() === '') {
-        throw new HttpError(400, {
-          message: 'Author name cannot be empty',
-          errors: null
-        });
-      }
-
-      // Check if new name already exists (excluding current author)
-      const existingName = await prisma.users.findFirst({
-        where: {
-          name: name.trim(),
-          role: 'author',
-          id: {
-            not: id
-          }
-        },
-      });
-
-      if (existingName) {
-        throw new HttpError(400, {
-          message: 'Author with this name already exists',
-          errors: null
-        });
-      }
-    }
-
-    // Validate email if provided
-    if (email !== undefined && email.trim() !== '') {
-      const existingEmail = await prisma.users.findUnique({
-        where: {
-          email: email.trim(),
-        },
-      });
-
-      if (existingEmail && existingEmail.id !== id) {
-        throw new HttpError(400, {
-          message: 'Email already exists',
-          errors: null
-        });
-      }
-    }
-
-    // Prepare update data
-    const updatePayload = {};
-    if (name !== undefined) updatePayload.name = name.trim();
-    if (email !== undefined) updatePayload.email = email?.trim() || null;
-
-    const updatedAuthor = await prisma.users.update({
-      where: {
-        id,
-      },
-      data: updatePayload,
-    });
-
-    return this.transformAuthorForFrontend(updatedAuthor);
-  },
-
-  // Delete a system author
-  async deleteAuthor(id) {
-    // Check if author exists
-    const author = await prisma.users.findUnique({
-      where: {
-        id,
-      },
-    });
-
-    if (!author) {
-      throw new HttpError(404, {
-        message: 'Author not found',
-        errors: null
-      });
-    }
-
-    // Check if author has published articles
-    const articlesCount = await prisma.$queryRawUnsafe(
-      'SELECT COUNT(*) as count FROM articles WHERE author_id = ? AND published_at IS NOT NULL',
-      id
-    );
-
-    if (Number(articlesCount[0].count) > 0) {
-      throw new HttpError(400, {
-        message: 'Cannot delete author who has published articles. Please reassign or unpublish the articles first.',
-        errors: null
-      });
-    }
-
-    await prisma.users.delete({
-      where: {
-        id,
-      },
-    });
-
-    return true;
-  },
-
-  // ✅ NEW: Validate if custom author name can be used
-  async validateCustomAuthor(customAuthorName) {
-    if (!customAuthorName || customAuthorName.trim() === '') {
-      throw new HttpError(400, {
-        message: 'Custom author name is required',
-        errors: null
-      });
-    }
-
-    // Check if it conflicts with existing system author
-    const existingSystemAuthor = await prisma.users.findFirst({
-      where: {
-        name: customAuthorName.trim(),
-        role: 'author'
-      }
-    });
-
-    if (existingSystemAuthor) {
-      throw new HttpError(400, {
-        message: 'This name is already used by a system author. Please choose a different name.',
-        errors: null
-      });
-    }
-
-    return true;
-  },
-
-  // ✅ NEW: Get author statistics
-  async getAuthorStats(authorIdentifier) {
-    let whereCondition, queryParam;
-    
-    if (typeof authorIdentifier === 'string' && !authorIdentifier.includes('custom_')) {
-      // Custom author by name
-      whereCondition = 'a.custom_author = ?';
-      queryParam = authorIdentifier;
+    if (isUUID) {
+      query = `
+        SELECT a.id, a.name, a.created_at, a.updated_at, a.created_by,
+          COALESCE(u.name, 'System') as creator_name,
+          COALESCE(u.email, '') as creator_email
+        FROM authors a
+        LEFT JOIN users u ON a.created_by = u.id
+        WHERE a.id = ? AND a.deleted_at IS NULL
+          AND a.name IS NOT NULL AND TRIM(a.name) != ''
+      `;
+      param = identifier;
     } else {
-      // System author by ID
-      whereCondition = 'a.author_id = ?';
-      queryParam = authorIdentifier;
+      query = `
+        SELECT a.id, a.name, a.created_at, a.updated_at, a.created_by,
+          COALESCE(u.name, 'System') as creator_name,
+          COALESCE(u.email, '') as creator_email
+        FROM authors a
+        LEFT JOIN users u ON a.created_by = u.id
+        WHERE a.name = ? AND a.deleted_at IS NULL
+          AND a.name IS NOT NULL AND TRIM(a.name) != ''
+      `;
+      param = identifier;
     }
 
-    const statsQuery = `
-      SELECT 
-        COUNT(*) as total_articles,
-        COUNT(CASE WHEN a.published_at IS NOT NULL THEN 1 END) as published_articles,
-        COUNT(CASE WHEN a.published_at IS NULL THEN 1 END) as draft_articles,
-        MIN(a.created_at) as first_article,
-        MAX(a.created_at) as latest_article
-      FROM articles a
-      WHERE ${whereCondition}
+    const rows = await prisma.$queryRawUnsafe(query, param);
+    return this.transformAuthorForFrontend(rows[0] || null);
+  },
+
+  async getAuthorByName(name) {
+    if (!name || !name.trim()) return null;
+    const query = `
+      SELECT a.id, a.name, a.created_at, a.updated_at, a.created_by
+      FROM authors a
+      WHERE a.deleted_at IS NULL 
+        AND LOWER(a.name) = LOWER(?)
+        AND a.name IS NOT NULL 
+        AND TRIM(a.name) != ''
+      LIMIT 1
     `;
+    const authors = await prisma.$queryRawUnsafe(query, name.trim());
+    return authors.length > 0 ? this.transformAuthorForFrontend(authors[0]) : null;
+  },
 
-    const result = await prisma.$queryRawUnsafe(statsQuery, queryParam);
-    const stats = result[0];
+  async createAuthor(authorData) {
+    const { name, created_by } = authorData;
+    if (!name || name.trim() === '') throw new HttpError('Author name is required', 400);
+    if (!created_by) throw new HttpError('Created by user ID is required', 401);
 
-    return {
-      total_articles: Number(stats.total_articles) || 0,
-      published_articles: Number(stats.published_articles) || 0,
-      draft_articles: Number(stats.draft_articles) || 0,
-      first_article: stats.first_article,
-      latest_article: stats.latest_article
-    };
+    const trimmedName = name.trim();
+    if (trimmedName === '') throw new HttpError('Author name cannot be just whitespace', 400);
+
+    const existing = await prisma.$queryRawUnsafe(
+      'SELECT id FROM authors WHERE LOWER(name) = LOWER(?) AND deleted_at IS NULL',
+      trimmedName
+    );
+    if (existing.length > 0) throw new HttpError('Author name already exists', 400);
+
+    const userExists = await prisma.$queryRawUnsafe(
+      'SELECT id FROM users WHERE id = ?',
+      created_by
+    );
+    if (userExists.length === 0) throw new HttpError('Invalid created_by user ID', 400);
+
+    const authorId = randomUUID();
+    const insertQuery = `
+      INSERT INTO authors (id, name, created_by, created_at, updated_at)
+      VALUES (?, ?, ?, NOW(), NOW())
+    `;
+    await prisma.$executeRawUnsafe(insertQuery, authorId, trimmedName, created_by);
+    return await this.getAuthorById(authorId);
+  },
+
+  async updateAuthor(id, updateData) {
+    const existingAuthor = await this.getAuthorById(id);
+    if (!existingAuthor) throw new HttpError('Author not found', 404);
+
+    const newAuthorName = updateData.name || updateData.author_name;
+    if (!newAuthorName || newAuthorName.trim() === '') throw new HttpError('Author name cannot be empty', 400);
+
+    const trimmedName = newAuthorName.trim();
+    if (trimmedName === '') throw new HttpError('Author name cannot be just whitespace', 400);
+
+    if (trimmedName !== existingAuthor.name) {
+      const existing = await prisma.$queryRawUnsafe(
+        'SELECT id FROM authors WHERE LOWER(name) = LOWER(?) AND id != ? AND deleted_at IS NULL',
+        trimmedName, id
+      );
+      if (existing.length > 0) throw new HttpError('Author name already exists', 400);
+    }
+
+    const updateQuery = `
+      UPDATE authors 
+      SET name = ?, updated_at = NOW()
+      WHERE id = ? AND deleted_at IS NULL
+    `;
+    await prisma.$executeRawUnsafe(updateQuery, trimmedName, id);
+    return await this.getAuthorById(id);
+  },
+
+  async getAuthorsWithArticleCount() {
+    const query = `
+      SELECT a.id, a.name, a.created_at, a.updated_at, a.created_by,
+        COALESCE(u.name, 'System') as creator_name,
+        COUNT(ar.id) as total_articles,
+        COUNT(CASE WHEN ar.published_at IS NOT NULL THEN 1 END) as published_articles
+      FROM authors a
+      LEFT JOIN users u ON a.created_by = u.id
+      LEFT JOIN articles ar ON a.id = ar.author_id AND ar.deleted_at IS NULL
+      WHERE a.deleted_at IS NULL
+        AND a.name IS NOT NULL AND TRIM(a.name) != ''
+      GROUP BY a.id, a.name, a.created_at, a.updated_at, a.created_by, u.name
+      ORDER BY a.created_at DESC
+    `;
+    const authors = await prisma.$queryRawUnsafe(query);
+    return authors.map(author => {
+      const transformed = this.transformAuthorForFrontend(author);
+      transformed.total_articles = Number(author.total_articles) || 0;
+      transformed.published_articles = Number(author.published_articles) || 0;
+      transformed.article_count = Number(author.published_articles) || 0;
+      return transformed;
+    });
+  },
+
+  async deleteAuthor(id) {
+    const existingAuthor = await this.getAuthorById(id);
+    if (!existingAuthor) throw new HttpError('Author tidak ditemukan', 404);
+
+    try {
+      const articlesCheckQuery = `
+        SELECT COUNT(*) as total_articles,
+          COUNT(CASE WHEN published_at IS NOT NULL THEN 1 END) as published_articles,
+          COUNT(CASE WHEN published_at IS NULL THEN 1 END) as draft_articles
+        FROM articles WHERE author_id = ? AND deleted_at IS NULL
+      `;
+      const articlesCount = await prisma.$queryRawUnsafe(articlesCheckQuery, id);
+      const totalArticles = Number(articlesCount[0].total_articles);
+      const publishedArticles = Number(articlesCount[0].published_articles);
+      const draftArticles = Number(articlesCount[0].draft_articles);
+
+      if (totalArticles > 0) {
+        if (publishedArticles > 0 && draftArticles > 0) {
+          throw new HttpError(`Tidak dapat menghapus author yang masih memiliki ${publishedArticles} artikel published dan ${draftArticles} artikel draft.`, 400);
+        } else if (publishedArticles > 0) {
+          throw new HttpError(`Tidak dapat menghapus author yang masih memiliki ${publishedArticles} artikel published.`, 400);
+        } else {
+          throw new HttpError(`Tidak dapat menghapus author yang masih memiliki ${draftArticles} artikel draft.`, 400);
+        }
+      }
+
+      const result = await prisma.$transaction(async (tx) => {
+        const finalCheck = await tx.$queryRawUnsafe(
+          'SELECT COUNT(*) as count FROM articles WHERE author_id = ? AND deleted_at IS NULL',
+          id
+        );
+        if (Number(finalCheck[0].count) > 0) throw new Error('Author masih memiliki artikel yang terkait');
+        return await tx.$executeRawUnsafe('DELETE FROM authors WHERE id = ?', id);
+      });
+
+      if (!result || (typeof result === 'object' && 'count' in result && result.count === 0)) {
+        throw new HttpError('Gagal menghapus author', 500);
+      }
+      return { success: true, message: 'Author berhasil dihapus' };
+    } catch (error) {
+      if (error instanceof HttpError) throw error;
+      if (error.code === 'P2003' || error.message?.includes('foreign key constraint')) {
+        throw new HttpError('Tidak dapat menghapus author yang masih memiliki artikel terkait.', 400);
+      }
+      if (error.code === '23000' || error.message?.includes('constraint')) {
+        throw new HttpError('Tidak dapat menghapus author karena masih ada data yang terkait.', 400);
+      }
+      if (error.message?.includes('artikel yang terkait')) {
+        throw new HttpError(error.message, 400);
+      }
+      throw new HttpError('Gagal menghapus author', 500);
+    }
+  },
+
+  async getArticleCountByAuthor(authorId) {
+    try {
+      const query = `
+        SELECT COUNT(*) as total_articles,
+          COUNT(CASE WHEN published_at IS NOT NULL THEN 1 END) as published_articles,
+          COUNT(CASE WHEN published_at IS NULL THEN 1 END) as draft_articles
+        FROM articles WHERE author_id = ? AND deleted_at IS NULL
+      `;
+      const result = await prisma.$queryRawUnsafe(query, authorId);
+      return {
+        total: Number(result[0].total_articles) || 0,
+        published: Number(result[0].published_articles) || 0,
+        draft: Number(result[0].draft_articles) || 0
+      };
+    } catch {
+      return { total: 0, published: 0, draft: 0 };
+    }
   }
 };
 

@@ -1,11 +1,11 @@
-model User{
-    id         String   @id @default(uuid(7))
+model User {
+    id         String   @id @default(uuid())
     name       String
     email      String   @unique
     password   String?
     role       RoleUser @default(siswa)
     verified   Boolean  @default(false)
-    googleId   String? @map("google_id")
+    googleId   String?  @map("google_id")
 
     otps            Otp[]
     passwordResets  PasswordReset[]
@@ -19,10 +19,10 @@ model User{
     class           Class[]
     salary          Salary[]
     categories      Category[]
-    articles        Article[]
+    createdAuthors  Author[]        @relation("AuthorCreatedBy") // Authors yang dibuat user ini
 
     createdAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @map("created_at") @db.Timestamp()
-    updatedAt  DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @map("updated_at") @db.Timestamp()
+    updatedAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @map("updated_at") @db.Timestamp()
 
     @@map("users")
 }

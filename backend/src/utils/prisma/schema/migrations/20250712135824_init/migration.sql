@@ -273,6 +273,19 @@ CREATE TABLE `categories` (
     PRIMARY KEY (`id_kategori`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable (NEW AUTHORS TABLE)
+CREATE TABLE `authors` (
+    `id` VARCHAR(191) NOT NULL,
+    `name` VARCHAR(255) NOT NULL,
+    `created_by` VARCHAR(191) NOT NULL, -- Admin yang membuat author
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_at` TIMESTAMP NULL DEFAULT NULL, -- Soft delete
+
+    UNIQUE INDEX `authors_name_key`(`name`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- CreateTable
 CREATE TABLE `articles` (
     `id` VARCHAR(191) NOT NULL,
@@ -345,4 +358,11 @@ ALTER TABLE `articles` ADD CONSTRAINT `articles_category_id_fkey` FOREIGN KEY (`
 
 ALTER TABLE `articles` ADD CONSTRAINT `articles_author_id_fkey` FOREIGN KEY (`author_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
+-- Add Foreign Key untuk created_by (menghubungkan ke tabel users)
+ALTER TABLE `authors` ADD CONSTRAINT `authors_created_by_fkey` 
+FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
+-- Update Foreign Key di articles table (ganti dari users ke authors)
+ALTER TABLE `articles` DROP FOREIGN KEY `articles_author_id_fkey`;
+ALTER TABLE `articles` ADD CONSTRAINT `articles_author_id_fkey` 
+FOREIGN KEY (`author_id`) REFERENCES `authors`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
